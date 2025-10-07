@@ -36,6 +36,7 @@
         .btn-secondary { background: linear-gradient(45deg, rgba(34,116,71,0.7), rgba(34,116,71,0.6)); color: white; border: 2px solid rgb(34,116,71); }
         .btn-warning { background: linear-gradient(45deg, #ffffff, #f8f9fa); color: rgb(34,116,71); border: 2px solid rgb(34,116,71); }
         .btn-danger { background: linear-gradient(45deg, #dc3545, #c82333); color: white; }
+        .btn-success { background: linear-gradient(45deg, #28a745, #218838); color: white; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         .section {
@@ -114,7 +115,7 @@
             border-radius: 25px;
             border: 2px solid rgba(255,255,255,0.2);
         }
-        .action-buttons { display: flex; gap: 10px; margin-top: 10px; }
+        .action-buttons { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
         .action-btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; color: white; }
         .edit-btn { background: rgb(34,116,71); }
         .delete-btn { background: #dc3545; }
@@ -122,6 +123,7 @@
         .alert { padding: 15px; margin-bottom: 20px; border-radius: 8px; font-weight: 500; }
         .alert-success { background-color: rgba(34,116,71,0.1); color: rgb(34,116,71); border: 1px solid rgba(34,116,71,0.3); }
         .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
         .labores-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-top: 15px; }
         .labor-item {
             background: rgba(255, 255, 255, 0.6);
@@ -158,10 +160,51 @@
             animation: spin 1s ease-in-out infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .search-productor {
+            background: rgba(34,116,71,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 2px solid rgba(34,116,71,0.2);
+        }
+        .search-results {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+        }
+        .search-result-item {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-result-item:hover { background: rgba(34,116,71,0.1); }
+        .search-result-item:last-child { border-bottom: none; }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        .filters-container {
+            background: rgba(34,116,71,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(34,116,71,0.2);
+        }
     </style>
 </head>
 <body>
-    <div id="loginSection" class="login-form">
+
+// PARTE 2 DE 5 (HTML - Login y Buscador de Productores)
+<div id="loginSection" class="login-form">
         <div class="login-header">
             <div class="logo-container">
                 <div class="zucarmex-logo">
@@ -197,6 +240,7 @@
             <div class="nav-buttons">
                 <button onclick="showSection('capture')" class="btn btn-primary">📝 Captura</button>
                 <button onclick="showSection('reports')" class="btn btn-secondary">📊 Informes</button>
+                <button onclick="showSection('weekly')" class="btn btn-secondary">📅 Informe Semanal</button>
                 <button onclick="showSection('data')" class="btn btn-warning">📋 Datos</button>
                 <button onclick="exportToExcel()" class="btn btn-secondary">📤 Exportar</button>
                 <button onclick="logout()" class="btn btn-danger">🚪 Salir</button>
@@ -205,6 +249,24 @@
 
         <div id="captureSection" class="section">
             <h2>Captura de Avance</h2>
+            
+            <div class="search-productor">
+                <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🔍 BUSCAR PRODUCTOR</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="searchProductor">Buscar por Campo o Nombre</label>
+                        <input type="text" id="searchProductor" placeholder="Escribe campo o nombre...">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button onclick="searchProductor()" class="btn btn-primary" style="width: 100%;">🔎 Buscar</button>
+                    </div>
+                </div>
+                <div id="searchResults" class="search-results hidden"></div>
+                <div style="margin-top: 15px;">
+                    <button onclick="clearProductorSearch()" class="btn btn-warning">🆕 Nuevo Productor (Captura Manual)</button>
+                </div>
+            </div>
+
             <div style="background: rgba(34,116,71,0.1); padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 2px solid rgba(34,116,71,0.2);">
                 <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">📋 DATOS DEL PRODUCTOR</h3>
                 <div class="form-row">
@@ -212,9 +274,9 @@
                         <label for="zafra_ciclo">Zafra-Ciclo *</label>
                         <select id="zafra_ciclo" required>
                             <option value="">Seleccione</option>
-                            <option value="2024-2025">2024-2025</option>
-                            <option value="2025-2026">2025-2026</option>
-                            <option value="2026-2027">2026-2027</option>
+                            <option value="20252026">20252026</option>
+                            <option value="20262027">20262027</option>
+                            <option value="20272028">20272028</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -237,7 +299,7 @@
                     </div>
                     <div class="form-group">
                         <label for="superficie">Superficie (Ha) *</label>
-                        <input type="number" id="superficie" step="0.1" min="0" required placeholder="3.5">
+                        <input type="number" id="superficie" step="0.01" min="0" required placeholder="3.5">
                     </div>
                 </div>
                 <div class="form-row">
@@ -245,17 +307,17 @@
                         <label for="ciclo">Ciclo *</label>
                         <select id="ciclo" required>
                             <option value="">Seleccione</option>
-                            <option value="P">P - Plantilla</option>
-                            <option value="S">S - Soca</option>
-                            <option value="R">R - Resoca</option>
+                            <option value="PLANTA">PLANTA</option>
+                            <option value="SOCA">SOCA</option>
+                            <option value="RESOCA">RESOCA</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="regimen">Régimen *</label>
                         <select id="regimen" required>
                             <option value="">Seleccione</option>
-                            <option value="R">R - Riego</option>
-                            <option value="T">T - Temporal</option>
+                            <option value="RIEGO">RIEGO</option>
+                            <option value="TEMPORAL">TEMPORAL</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -318,8 +380,51 @@
             </div>
         </div>
 
+        <div id="weeklySection" class="section">
+            <h2>Informe Semanal de Labores</h2>
+            <div class="filters-container">
+                <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🔍 FILTROS</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="filterZona">Zona</label>
+                        <select id="filterZona">
+                            <option value="TODAS">TODAS LAS ZONAS</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterCiclo">Ciclo</label>
+                        <select id="filterCiclo">
+                            <option value="SOCAS_RESOCAS">SOCAS Y RESOCAS</option>
+                            <option value="PLANTA">PLANTAS</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaInicio">Fecha Inicio</label>
+                        <input type="date" id="fechaInicio">
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaFin">Fecha Fin</label>
+                        <input type="date" id="fechaFin">
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button onclick="generateWeeklyReport()" class="btn btn-primary">📊 Generar Informe</button>
+                    <button onclick="exportWeeklyReport()" class="btn btn-success">📤 Exportar a Excel</button>
+                </div>
+            </div>
+            <div id="weeklyReportContainer"></div>
+        </div>
+
         <div id="dataSection" class="section">
             <h2>Gestión de Datos</h2>
+            <div id="adminControls" class="hidden" style="margin-bottom: 20px;">
+                <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">⚙️ CONTROLES DE ADMINISTRADOR</h3>
+                <div class="file-input-wrapper">
+                    <label for="excelFile" class="btn btn-success">📁 Importar Base de Productores (Excel)</label>
+                    <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleExcelUpload(event)">
+                </div>
+                <div id="uploadStatus" class="alert alert-info hidden" style="margin-top: 15px;"></div>
+            </div>
             <input type="text" id="searchInput" class="search-box" placeholder="Buscar...">
             <table class="data-table">
                 <thead>
@@ -339,10 +444,12 @@
         </div>
     </div>
 
+    // PARTE 3 DE 5 (JavaScript - Configuración y Funciones Principales)
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyDmP8esoCsmHsxAObhzb8eNDQvdtfFJ3gU",
@@ -358,6 +465,7 @@
         const db = getFirestore(app);
 
         let userData = [];
+        let productoresDB = [];
         let editingDocId = null;
         let currentUser = '';
         const adminUsers = ['admin@ingenio.com', 'siembras@ingenio.com'];
@@ -427,6 +535,12 @@
         window.editRecord = editRecord;
         window.deleteRecord = deleteRecord;
         window.exportToExcel = exportToExcel;
+        window.searchProductor = searchProductor;
+        window.selectProductor = selectProductor;
+        window.clearProductorSearch = clearProductorSearch;
+        window.handleExcelUpload = handleExcelUpload;
+        window.generateWeeklyReport = generateWeeklyReport;
+        window.exportWeeklyReport = exportWeeklyReport;
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -434,8 +548,15 @@
                 document.getElementById('currentUser').textContent = user.email;
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('mainApp').classList.remove('hidden');
+                
+                if (isAdmin(currentUser)) {
+                    document.getElementById('adminControls').classList.remove('hidden');
+                }
+                
                 initLabores();
                 loadDataFromFirebase();
+                loadProductoresDB();
+                populateZonaFilter();
                 showSection('capture');
             } else {
                 document.getElementById('loginSection').classList.remove('hidden');
@@ -484,6 +605,7 @@
                 document.getElementById('password').value = '';
                 clearForm();
                 userData = [];
+                productoresDB = [];
             } catch (error) {
                 showAlert('Error al cerrar sesión', 'error');
             }
@@ -507,13 +629,118 @@
             }
         }
 
+        async function loadProductoresDB() {
+            try {
+                const querySnapshot = await getDocs(collection(db, 'productores'));
+                productoresDB = [];
+                querySnapshot.forEach((d) => {
+                    productoresDB.push({ id: d.id, ...d.data() });
+                });
+                console.log(`${productoresDB.length} productores en base de datos`);
+            } catch (error) {
+                console.error('Error al cargar productores:', error);
+            }
+        }
+
+        function searchProductor() {
+            const searchTerm = document.getElementById('searchProductor').value.trim().toUpperCase();
+            if (!searchTerm) {
+                showAlert('Ingrese un término de búsqueda', 'error');
+                return;
+            }
+
+            const results = productoresDB.filter(p => 
+                p.CAMPO?.toString().toUpperCase().includes(searchTerm) || 
+                p.PRODUCTOR?.toUpperCase().includes(searchTerm)
+            );
+
+            const container = document.getElementById('searchResults');
+            
+            if (results.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">No se encontraron resultados</div>';
+                container.classList.remove('hidden');
+                return;
+            }
+
+            container.innerHTML = results.map((p, i) => `
+                <div class="search-result-item" onclick="selectProductor(${i}, ${JSON.stringify(p).replace(/"/g, '&quot;')})">
+                    <strong>${p.PRODUCTOR}</strong><br>
+                    <small>Campo: ${p.CAMPO} | Zona: ${p.ZONA} | ID: ${p.ID_PRODUCTOR} | Sup: ${p.SUPERFICIE} Ha</small>
+                </div>
+            `).join('');
+            
+            container.classList.remove('hidden');
+        }
+
+        function selectProductor(index, productor) {
+            document.getElementById('zafra_ciclo').value = productor.ZAFRA || '';
+            document.getElementById('zona').value = productor.ZONA || '';
+            document.getElementById('campo').value = productor.CAMPO || '';
+            document.getElementById('id_prod').value = productor.ID_PRODUCTOR || '';
+            document.getElementById('nombre_productor').value = productor.PRODUCTOR || '';
+            document.getElementById('superficie').value = productor.SUPERFICIE || '';
+            document.getElementById('ciclo').value = productor.CICLO || '';
+            document.getElementById('regimen').value = productor.REGIMEN || '';
+            
+            document.getElementById('searchResults').classList.add('hidden');
+            document.getElementById('searchProductor').value = '';
+            
+            showAlert('Productor seleccionado correctamente', 'success');
+        }
+
+        function clearProductorSearch() {
+            document.getElementById('searchProductor').value = '';
+            document.getElementById('searchResults').classList.add('hidden');
+            clearForm();
+        }
+
+        async function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const status = document.getElementById('uploadStatus');
+            status.textContent = 'Procesando archivo...';
+            status.classList.remove('hidden');
+
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                status.textContent = `Guardando ${jsonData.length} productores en Firebase...`;
+
+                for (const row of jsonData) {
+                    const docId = `${row.ZONA}_${row.CAMPO}`;
+                    await setDoc(doc(db, 'productores', docId), row);
+                }
+
+                await loadProductoresDB();
+                status.textContent = `✓ ${jsonData.length} productores importados exitosamente`;
+                status.className = 'alert alert-success';
+                
+                setTimeout(() => {
+                    status.classList.add('hidden');
+                }, 5000);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                status.textContent = '✗ Error al importar archivo';
+                status.className = 'alert alert-error';
+            }
+
+            event.target.value = '';
+        }
+
         function showSection(section) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(section + 'Section').classList.add('active');
             if (section === 'reports') updateStats();
             else if (section === 'data') loadDataTable();
+            else if (section === 'weekly') populateZonaFilter();
         }
-
+ 
+        // PARTE 4 DE 5 (JavaScript - Funciones de Guardado, Reportes y Tabla de Datos)
         async function saveRecord() {
             const laboresData = {};
             laboresList.forEach(labor => {
@@ -631,7 +858,7 @@
             setTimeout(() => alert.style.display = 'none', 3000);
         }
 
-function updateStats() {
+        function updateStats() {
             if (userData.length === 0) {
                 document.getElementById('totalSuperficie').textContent = '0';
                 document.getElementById('avgLaboresPorProductor').textContent = '0';
@@ -699,7 +926,7 @@ function updateStats() {
             Object.keys(laborNames).forEach(l => {
                 const s = stats[l];
                 const pct = totalSup > 0 ? ((s.sup / totalSup) * 100).toFixed(1) : 0;
-                html += `<tr><td><strong>${laborNames[l]}</strong></td><td>${s.sup.toFixed(1)}</td><td>${s.prod}</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
+                html += `<tr><td><strong>${laborNames[l]}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
             });
 
             html += '</tbody></table>';
@@ -727,7 +954,7 @@ function updateStats() {
                 const s = zonaStats[z];
                 const avg = (s.lab / s.prod).toFixed(1);
                 const pct = ((s.lab / (s.prod * 22)) * 100).toFixed(1);
-                html += `<tr><td><strong>Zona ${z}</strong></td><td>${s.sup.toFixed(1)}</td><td>${s.prod}</td><td>${avg}/22</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
+                html += `<tr><td><strong>Zona ${z}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/22</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
             });
 
             html += '</tbody></table>';
@@ -735,8 +962,7 @@ function updateStats() {
         }
 
         function generateCicloReport() {
-            const cicloStats = { P: { sup: 0, prod: 0, lab: 0 }, S: { sup: 0, prod: 0, lab: 0 }, R: { sup: 0, prod: 0, lab: 0 } };
-            const cicloNames = { P: 'Plantilla', S: 'Soca', R: 'Resoca' };
+            const cicloStats = { PLANTA: { sup: 0, prod: 0, lab: 0 }, SOCA: { sup: 0, prod: 0, lab: 0 }, RESOCA: { sup: 0, prod: 0, lab: 0 } };
 
             userData.forEach(r => {
                 const c = r.ciclo;
@@ -759,7 +985,7 @@ function updateStats() {
                 if (s.prod > 0) {
                     const avg = (s.lab / s.prod).toFixed(1);
                     const pct = ((s.lab / (s.prod * 22)) * 100).toFixed(1);
-                    html += `<tr><td><strong>${c} - ${cicloNames[c]}</strong></td><td>${s.sup.toFixed(1)}</td><td>${s.prod}</td><td>${avg}/22</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
+                    html += `<tr><td><strong>${c}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/22</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
                 }
             });
 
@@ -836,6 +1062,193 @@ function updateStats() {
                     showAlert('Error al eliminar', 'error');
                 }
             }
+        }
+        
+  //  PARTE 5 DE 5 (JavaScript - Informe Semanal, Exportación y Cierre)
+        function populateZonaFilter() {
+            const zonas = [...new Set(userData.map(r => r.zona))].sort((a, b) => a - b);
+            const select = document.getElementById('filterZona');
+            select.innerHTML = '<option value="TODAS">TODAS LAS ZONAS</option>';
+            zonas.forEach(z => {
+                select.innerHTML += `<option value="${z}">ZONA ${z}</option>`;
+            });
+        }
+
+        function generateWeeklyReport() {
+            const zona = document.getElementById('filterZona').value;
+            const ciclo = document.getElementById('filterCiclo').value;
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+
+            if (!fechaInicio || !fechaFin) {
+                showAlert('Seleccione las fechas de inicio y fin', 'error');
+                return;
+            }
+
+            const filteredData = userData.filter(r => {
+                const zonaMatch = zona === 'TODAS' || r.zona == zona;
+                let cicloMatch = false;
+                if (ciclo === 'SOCAS_RESOCAS') {
+                    cicloMatch = r.ciclo === 'SOCA' || r.ciclo === 'RESOCA';
+                } else if (ciclo === 'PLANTA') {
+                    cicloMatch = r.ciclo === 'PLANTA';
+                }
+                return zonaMatch && cicloMatch;
+            });
+
+            const laborStats = {};
+            laboresList.forEach(labor => {
+                laborStats[labor.id] = {
+                    nombre: labor.name,
+                    anterior: 0,
+                    semana: 0,
+                    total: 0
+                };
+            });
+
+            filteredData.forEach(r => {
+                const sup = parseFloat(r.superficie || 0);
+                if (r.labores) {
+                    Object.entries(r.labores).forEach(([laborId, laborData]) => {
+                        const realizada = laborData?.realizada || laborData === true;
+                        const fecha = laborData?.fecha;
+
+                        if (realizada && fecha) {
+                            const fechaLabor = new Date(fecha);
+                            const inicio = new Date(fechaInicio);
+                            const fin = new Date(fechaFin);
+
+                            if (laborStats[laborId]) {
+                                laborStats[laborId].total += sup;
+
+                                if (fechaLabor < inicio) {
+                                    laborStats[laborId].anterior += sup;
+                                } else if (fechaLabor >= inicio && fechaLabor <= fin) {
+                                    laborStats[laborId].semana += sup;
+                                    laborStats[laborId].anterior += sup;
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+            const laboresConAvance = Object.entries(laborStats).filter(([id, stats]) => stats.total > 0);
+
+            let html = `
+                <div style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px;">
+                    <h2 style="text-align: center; color: rgb(34,116,71); margin-bottom: 10px;">AVANCE FISICO DE LABORES</h2>
+                    <h3 style="text-align: center; color: #333; margin-bottom: 10px;">CICLO: ${ciclo === 'SOCAS_RESOCAS' ? 'SOCAS Y RESOCAS' : 'PLANTAS'}</h3>
+                    <h3 style="text-align: center; color: #333; margin-bottom: 10px;">ZONA: ${zona === 'TODAS' ? 'TODAS' : zona}</h3>
+                    <h3 style="text-align: center; color: #333; margin-bottom: 20px;">SEMANA DEL ${new Date(fechaInicio).toLocaleDateString('es-MX')} AL ${new Date(fechaFin).toLocaleDateString('es-MX')}</h3>
+                    
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>LABOR</th>
+                                <th style="text-align: center;">Anterior</th>
+                                <th style="text-align: center;">Semana</th>
+                                <th style="text-align: center;">A la Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (laboresConAvance.length === 0) {
+                html += '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #666;">No hay labores con avance en el período seleccionado</td></tr>';
+            } else {
+                laboresConAvance.forEach(([id, stats]) => {
+                    const anterior = stats.anterior - stats.semana;
+                    html += `
+                        <tr>
+                            <td><strong>${stats.nombre.toUpperCase()}</strong></td>
+                            <td style="text-align: center;">${anterior.toFixed(2)}</td>
+                            <td style="text-align: center;">${stats.semana.toFixed(2)}</td>
+                            <td style="text-align: center;">${stats.total.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += '</tbody></table></div>';
+            document.getElementById('weeklyReportContainer').innerHTML = html;
+        }
+
+        function exportWeeklyReport() {
+            const zona = document.getElementById('filterZona').value;
+            const ciclo = document.getElementById('filterCiclo').value;
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+
+            if (!fechaInicio || !fechaFin) {
+                showAlert('Genere primero el informe', 'error');
+                return;
+            }
+
+            const filteredData = userData.filter(r => {
+                const zonaMatch = zona === 'TODAS' || r.zona == zona;
+                let cicloMatch = false;
+                if (ciclo === 'SOCAS_RESOCAS') {
+                    cicloMatch = r.ciclo === 'SOCA' || r.ciclo === 'RESOCA';
+                } else if (ciclo === 'PLANTA') {
+                    cicloMatch = r.ciclo === 'PLANTA';
+                }
+                return zonaMatch && cicloMatch;
+            });
+
+            const laborStats = {};
+            laboresList.forEach(labor => {
+                laborStats[labor.id] = { nombre: labor.name, anterior: 0, semana: 0, total: 0 };
+            });
+
+            filteredData.forEach(r => {
+                const sup = parseFloat(r.superficie || 0);
+                if (r.labores) {
+                    Object.entries(r.labores).forEach(([laborId, laborData]) => {
+                        const realizada = laborData?.realizada || laborData === true;
+                        const fecha = laborData?.fecha;
+
+                        if (realizada && fecha) {
+                            const fechaLabor = new Date(fecha);
+                            const inicio = new Date(fechaInicio);
+                            const fin = new Date(fechaFin);
+
+                            if (laborStats[laborId]) {
+                                laborStats[laborId].total += sup;
+                                if (fechaLabor < inicio) {
+                                    laborStats[laborId].anterior += sup;
+                                } else if (fechaLabor >= inicio && fechaLabor <= fin) {
+                                    laborStats[laborId].semana += sup;
+                                    laborStats[laborId].anterior += sup;
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+            const laboresConAvance = Object.entries(laborStats).filter(([id, stats]) => stats.total > 0);
+
+            let csv = "data:text/csv;charset=utf-8,";
+            csv += "AVANCE FISICO DE LABORES\n";
+            csv += `CICLO: ${ciclo === 'SOCAS_RESOCAS' ? 'SOCAS Y RESOCAS' : 'PLANTAS'}\n`;
+            csv += `ZONA: ${zona === 'TODAS' ? 'TODAS' : zona}\n`;
+            csv += `SEMANA DEL ${new Date(fechaInicio).toLocaleDateString('es-MX')} AL ${new Date(fechaFin).toLocaleDateString('es-MX')}\n\n`;
+            csv += "LABOR,Anterior,Semana,A la Fecha\n";
+
+            laboresConAvance.forEach(([id, stats]) => {
+                const anterior = stats.anterior - stats.semana;
+                csv += `"${stats.nombre}",${anterior.toFixed(2)},${stats.semana.toFixed(2)},${stats.total.toFixed(2)}\n`;
+            });
+
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csv));
+            link.setAttribute("download", `informe_semanal_${zona}_${ciclo}_${fechaInicio}_${fechaFin}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showAlert('Informe exportado exitosamente', 'success');
         }
 
         function exportToExcel() {
@@ -916,9 +1329,15 @@ function updateStats() {
             e.target.value = e.target.value.toUpperCase();
         });
 
+        document.getElementById('searchProductor').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchProductor();
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('fecha_avance').value = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaInicio').value = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaFin').value = new Date().toISOString().split('T')[0];
         });
     </script>
 </body>
-</html>        
+</html>
