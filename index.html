@@ -37,6 +37,7 @@
         .btn-warning { background: linear-gradient(45deg, #ffffff, #f8f9fa); color: rgb(34,116,71); border: 2px solid rgb(34,116,71); }
         .btn-danger { background: linear-gradient(45deg, #dc3545, #c82333); color: white; }
         .btn-success { background: linear-gradient(45deg, #28a745, #218838); color: white; }
+        .btn-info { background: linear-gradient(45deg, #17a2b8, #138496); color: white; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         .section {
@@ -199,1144 +200,1449 @@
             margin-bottom: 20px;
             border: 2px solid rgba(34,116,71,0.2);
         }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        canvas {
+            max-height: 400px;
+        }
+        @media print {
+            body { background: white; }
+            .header, .nav-buttons, .filters-container, .btn { display: none !important; }
+            .section { box-shadow: none; padding: 20px; }
+            .chart-container { page-break-inside: avoid; }
+        }
     </style>
 </head>
 <body>
 
-<!-- PARTE 2 DE 5 (HTML - Login y Buscador de Productores) -->
 <div id="loginSection" class="login-form">
-        <div class="login-header">
-            <div class="logo-container">
-                <div class="zucarmex-logo">
-                    <div class="logo-triangles">
-                        <div class="triangle triangle1"></div>
-                        <div class="triangle triangle2"></div>
-                        <div class="triangle triangle3"></div>
-                    </div>
-                    ZUCARMEX<sup>®</sup>
+    <div class="login-header">
+        <div class="logo-container">
+            <div class="zucarmex-logo">
+                <div class="logo-triangles">
+                    <div class="triangle triangle1"></div>
+                    <div class="triangle triangle2"></div>
+                    <div class="triangle triangle3"></div>
                 </div>
+                ZUCARMEX<sup>®</sup>
             </div>
-            <div class="company-title">Ingenio Mahuixtlán</div>
-            <div class="company-subtitle">Avance Físico de Labores Agrícolas</div>
         </div>
-        <div class="form-group">
-            <label for="username">Correo Electrónico</label>
-            <input type="email" id="username" placeholder="usuario@ejemplo.com">
+        <div class="company-title">Ingenio Mahuixtlán</div>
+        <div class="company-subtitle">Avance Físico de Labores Agrícolas</div>
+    </div>
+    <div class="form-group">
+        <label for="username">Correo Electrónico</label>
+        <input type="email" id="username" placeholder="usuario@ejemplo.com">
+    </div>
+    <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" placeholder="••••••••">
+    </div>
+    <button onclick="handleLogin()" class="btn btn-primary" id="loginBtn" style="width: 100%; padding: 15px;">Entrar</button>
+    <div id="loginAlert" class="alert alert-error hidden">Usuario o contraseña incorrectos</div>
+</div>
+
+<div id="mainApp" class="container hidden">
+    <div class="header">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h1 style="color: rgb(34,116,71); margin: 0; font-size: 24px;">Ingenio Mahuixtlán - Avance Físico</h1>
+            <div class="user-info"><span>👤</span><span id="currentUser">Usuario</span></div>
         </div>
-        <div class="form-group">
-            <label for="password">Contraseña</label>
-            <input type="password" id="password" placeholder="••••••••">
+        <div class="nav-buttons">
+            <button onclick="showSection('capture')" class="btn btn-primary">📝 Captura</button>
+            <button onclick="showSection('reports')" class="btn btn-secondary">📊 Informes</button>
+            <button onclick="showSection('weekly')" class="btn btn-secondary">📅 Informe Semanal</button>
+            <button onclick="showSection('data')" class="btn btn-warning">📋 Datos</button>
+            <button onclick="exportToExcel()" class="btn btn-secondary">📤 Exportar</button>
+            <button onclick="logout()" class="btn btn-danger">🚪 Salir</button>
         </div>
-        <button onclick="handleLogin()" class="btn btn-primary" id="loginBtn" style="width: 100%; padding: 15px;">Entrar</button>
-        <div id="loginAlert" class="alert alert-error hidden">Usuario o contraseña incorrectos</div>
     </div>
 
-    <div id="mainApp" class="container hidden">
-        <div class="header">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h1 style="color: rgb(34,116,71); margin: 0; font-size: 24px;">Ingenio Mahuixtlán - Avance Físico</h1>
-                <div class="user-info"><span>👤</span><span id="currentUser">Usuario</span></div>
+    <div id="captureSection" class="section">
+        <h2>Captura de Avance</h2>
+        
+        <div class="search-productor">
+            <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🔍 BUSCAR PRODUCTOR</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="searchProductor">Buscar por Campo o Nombre</label>
+                    <input type="text" id="searchProductor" placeholder="Escribe campo o nombre...">
+                </div>
+                <div class="form-group" style="display: flex; align-items: flex-end;">
+                    <button onclick="searchProductor()" class="btn btn-primary" style="width: 100%;">🔎 Buscar</button>
+                </div>
             </div>
-            <div class="nav-buttons">
-                <button onclick="showSection('capture')" class="btn btn-primary">📝 Captura</button>
-                <button onclick="showSection('reports')" class="btn btn-secondary">📊 Informes</button>
-                <button onclick="showSection('weekly')" class="btn btn-secondary">📅 Informe Semanal</button>
-                <button onclick="showSection('data')" class="btn btn-warning">📋 Datos</button>
-                <button onclick="exportToExcel()" class="btn btn-secondary">📤 Exportar</button>
-                <button onclick="logout()" class="btn btn-danger">🚪 Salir</button>
+            <div id="searchResults" class="search-results hidden"></div>
+            <div style="margin-top: 15px;">
+                <button onclick="clearProductorSearch()" class="btn btn-warning">🆕 Nuevo Productor (Captura Manual)</button>
             </div>
         </div>
 
-        <div id="captureSection" class="section">
-            <h2>Captura de Avance</h2>
+        <div style="background: rgba(34,116,71,0.1); padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 2px solid rgba(34,116,71,0.2);">
+            <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">📋 DATOS DEL PRODUCTOR</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="zafra_ciclo">Zafra-Ciclo *</label>
+                    <select id="zafra_ciclo" required>
+                        <option value="">Seleccione</option>
+                        <option value="20252026">20252026</option>
+                        <option value="20262027">20262027</option>
+                        <option value="20272028">20272028</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="zona">Zona *</label>
+                    <input type="number" id="zona" min="1" max="20" required placeholder="Ej: 4">
+                </div>
+                <div class="form-group">
+                    <label for="campo">Campo *</label>
+                    <input type="text" id="campo" required placeholder="Código">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_prod">ID-Prod *</label>
+                    <input type="text" id="id_prod" required placeholder="2810032">
+                </div>
+                <div class="form-group">
+                    <label for="nombre_productor">Nombre *</label>
+                    <input type="text" id="nombre_productor" required style="text-transform: uppercase;">
+                </div>
+                <div class="form-group">
+                    <label for="superficie">Superficie (Ha) *</label>
+                    <input type="number" id="superficie" step="0.01" min="0" required placeholder="3.5">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ciclo">Ciclo *</label>
+                    <select id="ciclo" required>
+                        <option value="">Seleccione</option>
+                        <option value="PLANTA">PLANTA</option>
+                        <option value="SOCA">SOCA</option>
+                        <option value="RESOCA">RESOCA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="regimen">Régimen *</label>
+                    <select id="regimen" required>
+                        <option value="">Seleccione</option>
+                        <option value="RIEGO">RIEGO</option>
+                        <option value="TEMPORAL">TEMPORAL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fecha_avance">Fecha *</label>
+                    <input type="date" id="fecha_avance" required>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.8); padding: 20px; border-radius: 10px; border: 2px solid rgba(34,116,71,0.3);">
+            <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🚜 LABORES REALIZADAS</h3>
+            <div class="labores-grid" id="laboresGrid"></div>
+            <div class="form-row" style="margin-top: 20px;">
+                <div class="form-group">
+                    <label for="observaciones">Observaciones</label>
+                    <textarea id="observaciones" rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons" style="margin-top: 25px;">
+            <button onclick="saveRecord()" class="btn btn-primary">💾 Guardar</button>
+            <button onclick="clearForm()" class="btn btn-secondary">🗑️ Limpiar</button>
+            <button id="cancelEdit" onclick="cancelEdit()" class="btn btn-warning hidden">❌ Cancelar</button>
+        </div>
+        <div id="formAlert"></div>
+    </div>
+
+    <div id="reportsSection" class="section">
+        <h2>Informes de Avance</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalSuperficie">0</div>
+                <div>Superficie Total (Ha)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avgLaboresPorProductor">0</div>
+                <div>Promedio Labores</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="productoresActivos">0</div>
+                <div>Productores</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="porcentajeAvanceGeneral">0%</div>
+                <div>% Avance</div>
+            </div>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+            <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">📊 Superficie por Labor</h3>
+            <div id="laborSuperficieTable"></div>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+            <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🗺️ Avance por Zona</h3>
+            <div id="zonaAvanceTable"></div>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 10px;">
+            <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🌱 Por Ciclo</h3>
+            <div id="cicloComparativa"></div>
+        </div>
+    </div>
+
+    <div id="weeklySection" class="section">
+        <h2>Informe Semanal de Labores</h2>
+        <div class="filters-container">
+            <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🔍 FILTROS</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="filterZafra">Zafra *</label>
+                    <select id="filterZafra">
+                        <option value="">Seleccione una zafra</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filterZona">Zona</label>
+                    <select id="filterZona">
+                        <option value="TODAS">TODAS LAS ZONAS</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filterCiclo">Ciclo</label>
+                    <select id="filterCiclo">
+                        <option value="SOCAS_RESOCAS">SOCAS Y RESOCAS</option>
+                        <option value="PLANTA">PLANTAS</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fechaInicio">Fecha Inicio *</label>
+                    <input type="date" id="fechaInicio">
+                </div>
+                <div class="form-group">
+                    <label for="fechaFin">Fecha Fin *</label>
+                    <input type="date" id="fechaFin">
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button onclick="generateWeeklyReport()" class="btn btn-primary">📊 Generar Informe</button>
+                <button onclick="clearWeeklyFilters()" class="btn btn-warning">🔄 Limpiar Filtros</button>
+                <button onclick="printWeeklyReport()" class="btn btn-info">🖨️ Imprimir</button>
+                <button onclick="exportWeeklyToPDF()" class="btn btn-success">📄 Exportar PDF</button>
+                <button onclick="exportWeeklyReport()" class="btn btn-success">📤 Exportar Excel</button>
+            </div>
+        </div>
+        <div id="weeklyReportContainer"></div>
+    </div>
+
+    <div id="dataSection" class="section">
+        <h2>Gestión de Datos</h2>
+        <div id="adminControls" class="hidden" style="margin-bottom: 20px;">
+            <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">⚙️ CONTROLES DE ADMINISTRADOR</h3>
+            <div class="file-input-wrapper">
+                <label for="excelFile" class="btn btn-success">📁 Importar Base de Productores (Excel)</label>
+                <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleExcelUpload(event)">
+            </div>
+            <div id="uploadStatus" class="alert alert-info hidden" style="margin-top: 15px;"></div>
+        </div>
+        <input type="text" id="searchInput" class="search-box" placeholder="Buscar...">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID-Prod</th>
+                    <th>Productor</th>
+                    <th>Zona</th>
+                    <th>Campo</th>
+                    <th>Superficie</th>
+                    <th>Ciclo</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="dataTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDmP8esoCsmHsxAObhzb8eNDQvdtfFJ3gU",
+        authDomain: "ingenio-mahuixtlan.firebaseapp.com",
+        projectId: "ingenio-mahuixtlan",
+        storageBucket: "ingenio-mahuixtlan.firebasestorage.app",
+        messagingSenderId: "835526438503",
+        appId: "1:835526438503:web:851ffb19a5e966e759eec2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let userData = [];
+    let productoresDB = [];
+    let editingDocId = null;
+    let currentUser = '';
+    let weeklyChart = null;
+    const adminUsers = ['admin@ingenio.com', 'siembras@ingenio.com'];
+
+    const laboresList = [
+        {id: 'desmonte', name: 'Desmonte'},
+        {id: 'primer_barbecho', name: '1er. Barbecho'},
+        {id: 'segundo_barbecho', name: '2do. Barbecho'},
+        {id: 'ap_encalado', name: 'Ap./Encalado'},
+        {id: 'primera_rastra', name: '1ra. Rastra'},
+        {id: 'surco', name: 'Surco'},
+        {id: 'siembra_amp', name: 'Siembra-Amp.'},
+        {id: 'siembra_rep', name: 'Siembra-Rep.'},
+        {id: 'jta_quema', name: 'Jta. Quema'},
+        {id: 'primer_cultivo', name: '1er. Cultivo'},
+        {id: 'primer_cultivo_yta', name: '1er. Cultivo/Yta.'},
+        {id: 'primera_ap_fertilizante', name: '1ra. Ap/Fertilizante'},
+        {id: 'primera_ap_fert_mec', name: '1ra. Ap/Fert.Mec.'},
+        {id: 'primer_riego', name: '1er. Riego'},
+        {id: 'subsuelo_ctral', name: 'Subsuelo/Ctral.'},
+        {id: 'primera_limpia', name: '1ra. Limpia'},
+        {id: 'primera_ap_herbicida', name: '1ra. Ap/Herbicida'},
+        {id: 'segunda_ap_ferti', name: '2da. Ap/Ferti.'},
+        {id: 'segundo_riego', name: '2do. Riego'},
+        {id: 'segunda_limpia', name: '2da. Limpia'},
+        {id: 'segunda_ap_herbicida', name: '2da. Ap/Herbicida'},
+        {id: 'resiembra', name: 'Resiembra'}
+    ];
+
+    function initLabores() {
+        const container = document.getElementById('laboresGrid');
+        container.innerHTML = laboresList.map(labor => `
+            <div class="labor-item">
+                <div class="labor-header">
+                    <label class="labor-label">
+                        <input type="checkbox" id="${labor.id}" class="labor-checkbox" onchange="window.toggleLaborDate('${labor.id}')">
+                        <span class="labor-text">${labor.name}</span>
+                    </label>
+                </div>
+                <div class="labor-date-container">
+                    <input type="date" id="${labor.id}_fecha" class="labor-date-input" disabled>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function isAdmin(email) {
+        return adminUsers.includes(email?.toLowerCase());
+    }
+
+    function toggleLaborDate(laborId) {
+        const cb = document.getElementById(laborId);
+        const dt = document.getElementById(laborId + '_fecha');
+        if (cb && dt) {
+            dt.disabled = !cb.checked;
+            if (!cb.checked) dt.value = '';
+        }
+    }
+
+    window.toggleLaborDate = toggleLaborDate;
+    window.handleLogin = handleLogin;
+    window.logout = logout;
+    window.showSection = showSection;
+    window.saveRecord = saveRecord;
+    window.clearForm = clearForm;
+    window.cancelEdit = cancelEdit;
+    window.editRecord = editRecord;
+    window.deleteRecord = deleteRecord;
+    window.exportToExcel = exportToExcel;
+    window.searchProductor = searchProductor;
+    window.selectProductor = selectProductor;
+    window.clearProductorSearch = clearProductorSearch;
+    window.handleExcelUpload = handleExcelUpload;
+    window.generateWeeklyReport = generateWeeklyReport;
+    window.exportWeeklyReport = exportWeeklyReport;
+    window.clearWeeklyFilters = clearWeeklyFilters;
+    window.printWeeklyReport = printWeeklyReport;
+    window.exportWeeklyToPDF = exportWeeklyToPDF;
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user.email;
+            document.getElementById('currentUser').textContent = user.email;
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
             
-            <div class="search-productor">
-                <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🔍 BUSCAR PRODUCTOR</h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="searchProductor">Buscar por Campo o Nombre</label>
-                        <input type="text" id="searchProductor" placeholder="Escribe campo o nombre...">
-                    </div>
-                    <div class="form-group" style="display: flex; align-items: flex-end;">
-                        <button onclick="searchProductor()" class="btn btn-primary" style="width: 100%;">🔎 Buscar</button>
-                    </div>
-                </div>
-                <div id="searchResults" class="search-results hidden"></div>
-                <div style="margin-top: 15px;">
-                    <button onclick="clearProductorSearch()" class="btn btn-warning">🆕 Nuevo Productor (Captura Manual)</button>
-                </div>
-            </div>
+            // Mostrar controles de administrador solo para usuarios autorizados
+            const adminControls = document.getElementById('adminControls');
+            if (isAdmin(currentUser)) {
+                adminControls.classList.remove('hidden');
+            } else {
+                adminControls.classList.add('hidden');
+            }
+            
+            initLabores();
+            loadDataFromFirebase();
+            loadProductoresDB();
+            populateZonaFilter();
+            populateZafraFilter();
+            showSection('capture');
+        } else {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+    });
 
-            <div style="background: rgba(34,116,71,0.1); padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 2px solid rgba(34,116,71,0.2);">
-                <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">📋 DATOS DEL PRODUCTOR</h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="zafra_ciclo">Zafra-Ciclo *</label>
-                        <select id="zafra_ciclo" required>
-                            <option value="">Seleccione</option>
-                            <option value="20252026">20252026</option>
-                            <option value="20252027">20252027</option>
-                            <option value="20262027">20262027</option>
-                            <option value="20262028">20262028</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="zona">Zona *</label>
-                        <input type="number" id="zona" min="1" max="20" required placeholder="Ej: 4">
-                    </div>
-                    <div class="form-group">
-                        <label for="campo">Campo *</label>
-                        <input type="text" id="campo" required placeholder="Código">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="id_prod">ID-Prod *</label>
-                        <input type="text" id="id_prod" required placeholder="2810032">
-                    </div>
-                    <div class="form-group">
-                        <label for="nombre_productor">Nombre *</label>
-                        <input type="text" id="nombre_productor" required style="text-transform: uppercase;">
-                    </div>
-                    <div class="form-group">
-                        <label for="superficie">Superficie (Ha) *</label>
-                        <input type="number" id="superficie" step="0.01" min="0" required placeholder="3.5">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="ciclo">Ciclo *</label>
-                        <select id="ciclo" required>
-                            <option value="">Seleccione</option>
-                            <option value="PLANTA">PLANTA</option>
-                            <option value="SOCA">SOCA</option>
-                            <option value="RESOCA">RESOCA</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="regimen">Régimen *</label>
-                        <select id="regimen" required>
-                            <option value="">Seleccione</option>
-                            <option value="RIEGO">RIEGO</option>
-                            <option value="TEMPORAL">TEMPORAL</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="fecha_avance">Fecha *</label>
-                        <input type="date" id="fecha_avance" required>
-                    </div>
-                </div>
-            </div>
+    async function handleLogin() {
+        const email = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const alert = document.getElementById('loginAlert');
+        const btn = document.getElementById('loginBtn');
 
-            <div style="background: rgba(255,255,255,0.8); padding: 20px; border-radius: 10px; border: 2px solid rgba(34,116,71,0.3);">
-                <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🚜 LABORES REALIZADAS</h3>
-                <div class="labores-grid" id="laboresGrid"></div>
-                <div class="form-row" style="margin-top: 20px;">
-                    <div class="form-group">
-                        <label for="observaciones">Observaciones</label>
-                        <textarea id="observaciones" rows="2"></textarea>
-                    </div>
-                </div>
-            </div>
+        if (!email || !password) {
+            alert.textContent = 'Complete todos los campos';
+            alert.classList.remove('hidden');
+            return;
+        }
 
-            <div class="action-buttons" style="margin-top: 25px;">
-                <button onclick="saveRecord()" class="btn btn-primary">💾 Guardar</button>
-                <button onclick="clearForm()" class="btn btn-secondary">🗑️ Limpiar</button>
-                <button id="cancelEdit" onclick="cancelEdit()" class="btn btn-warning hidden">❌ Cancelar</button>
-            </div>
-            <div id="formAlert"></div>
-        </div>
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Entrando...';
+        }
 
-        <div id="reportsSection" class="section">
-            <h2>Informes de Avance</h2>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalSuperficie">0</div>
-                    <div>Superficie Total (Ha)</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="avgLaboresPorProductor">0</div>
-                    <div>Promedio Labores</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="productoresActivos">0</div>
-                    <div>Productores</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="porcentajeAvanceGeneral">0%</div>
-                    <div>% Avance</div>
-                </div>
-            </div>
-            <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">📊 Superficie por Labor</h3>
-                <div id="laborSuperficieTable"></div>
-            </div>
-            <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🗺️ Avance por Zona</h3>
-                <div id="zonaAvanceTable"></div>
-            </div>
-            <div style="background: white; padding: 20px; border-radius: 10px;">
-                <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🌱 Por Ciclo</h3>
-                <div id="cicloComparativa"></div>
-            </div>
-        </div>
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            alert.classList.add('hidden');
+        } catch (error) {
+            let msg = 'Error al iniciar sesión';
+            if (error.code === 'auth/invalid-credential') msg = 'Credenciales inválidas';
+            else if (error.code === 'auth/too-many-requests') msg = 'Demasiados intentos';
+            alert.textContent = msg;
+            alert.classList.remove('hidden');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Entrar';
+            }
+        }
+    }
 
-        <div id="weeklySection" class="section">
-            <h2>Informe Semanal de Labores</h2>
-            <div class="filters-container">
-                <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🔍 FILTROS</h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="filterZona">Zona</label>
-                        <select id="filterZona">
-                            <option value="TODAS">TODAS LAS ZONAS</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="filterCiclo">Ciclo</label>
-                        <select id="filterCiclo">
-                            <option value="SOCAS_RESOCAS">SOCAS Y RESOCAS</option>
-                            <option value="PLANTA">PLANTAS</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="fechaInicio">Fecha Inicio</label>
-                        <input type="date" id="fechaInicio">
-                    </div>
-                    <div class="form-group">
-                        <label for="fechaFin">Fecha Fin</label>
-                        <input type="date" id="fechaFin">
-                    </div>
-                </div>
-                <div class="action-buttons">
-                    <button onclick="generateWeeklyReport()" class="btn btn-primary">📊 Generar Informe</button>
-                    <button onclick="exportWeeklyReport()" class="btn btn-success">📤 Exportar a Excel</button>
-                </div>
+    async function logout() {
+        try {
+            // Limpiar filtros del informe semanal
+            clearWeeklyFilters();
+            await signOut(auth);
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            clearForm();
+            userData = [];
+            productoresDB = [];
+        } catch (error) {
+            showAlert('Error al cerrar sesión', 'error');
+        }
+    }
+
+    async function loadDataFromFirebase() {
+        try {
+            const q = query(collection(db, 'labores_agricolas'), orderBy('timestamp', 'desc'));
+            const querySnapshot = await getDocs(q);
+            userData = [];
+            querySnapshot.forEach((d) => {
+                const data = { id: d.id, ...d.data() };
+                if (isAdmin(currentUser) || data.user === currentUser) {
+                    userData.push(data);
+                }
+            });
+            console.log(`${userData.length} registros cargados`);
+        } catch (error) {
+            console.error('Error:', error);
+            showAlert('Error al cargar datos', 'error');
+        }
+    }
+
+    async function loadProductoresDB() {
+        try {
+            const querySnapshot = await getDocs(collection(db, 'productores'));
+            productoresDB = [];
+            querySnapshot.forEach((d) => {
+                productoresDB.push({ id: d.id, ...d.data() });
+            });
+            console.log(`${productoresDB.length} productores en base de datos`);
+        } catch (error) {
+            console.error('Error al cargar productores:', error);
+        }
+    }
+
+    function searchProductor() {
+        const searchTerm = document.getElementById('searchProductor').value.trim().toUpperCase();
+        if (!searchTerm) {
+            showAlert('Ingrese un término de búsqueda', 'error');
+            return;
+        }
+
+        const results = productoresDB.filter(p => 
+            p.CAMPO?.toString().toUpperCase().includes(searchTerm) || 
+            p.PRODUCTOR?.toUpperCase().includes(searchTerm)
+        );
+
+        const container = document.getElementById('searchResults');
+        
+        if (results.length === 0) {
+            container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">No se encontraron resultados</div>';
+            container.classList.remove('hidden');
+            return;
+        }
+
+        container.innerHTML = results.map((p, i) => `
+            <div class="search-result-item" onclick="selectProductor(${i}, ${JSON.stringify(p).replace(/"/g, '&quot;')})">
+                <strong>${p.PRODUCTOR}</strong><br>
+                <small>Campo: ${p.CAMPO} | Zona: ${p.ZONA} | ID: ${p.ID_PRODUCTOR} | Sup: ${p.SUPERFICIE} Ha</small>
             </div>
-            <div id="weeklyReportContainer"></div>
-        </div>
+        `).join('');
+        
+        container.classList.remove('hidden');
+    }
 
-        <div id="dataSection" class="section">
-            <h2>Gestión de Datos</h2>
-            <div id="adminControls" class="hidden" style="margin-bottom: 20px;">
-                <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">⚙️ CONTROLES DE ADMINISTRADOR</h3>
-                <div class="file-input-wrapper">
-                    <label for="excelFile" class="btn btn-success">📁 Importar Base de Productores (Excel)</label>
-                    <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleExcelUpload(event)">
-                </div>
-                <div id="uploadStatus" class="alert alert-info hidden" style="margin-top: 15px;"></div>
-            </div>
-            <input type="text" id="searchInput" class="search-box" placeholder="Buscar...">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>ID-Prod</th>
-                        <th>Productor</th>
-                        <th>Zona</th>
-                        <th>Campo</th>
-                        <th>Superficie</th>
-                        <th>Ciclo</th>
-                        <th>Fecha</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="dataTableBody"></tbody>
-            </table>
-        </div>
-    </div>
+    function selectProductor(index, productor) {
+        document.getElementById('zafra_ciclo').value = productor.ZAFRA || '';
+        document.getElementById('zona').value = productor.ZONA || '';
+        document.getElementById('campo').value = productor.CAMPO || '';
+        document.getElementById('id_prod').value = productor.ID_PRODUCTOR || '';
+        document.getElementById('nombre_productor').value = productor.PRODUCTOR || '';
+        document.getElementById('superficie').value = productor.SUPERFICIE || '';
+        document.getElementById('ciclo').value = productor.CICLO || '';
+        document.getElementById('regimen').value = productor.REGIMEN || '';
+        
+        document.getElementById('searchResults').classList.add('hidden');
+        document.getElementById('searchProductor').value = '';
+        
+        showAlert('Productor seleccionado correctamente', 'success');
+    }
 
-    <!-- PARTE 3 DE 5 (JavaScript - Configuración y Funciones Principales) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    function clearProductorSearch() {
+        document.getElementById('searchProductor').value = '';
+        document.getElementById('searchResults').classList.add('hidden');
+        clearForm();
+    }
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDmP8esoCsmHsxAObhzb8eNDQvdtfFJ3gU",
-            authDomain: "ingenio-mahuixtlan.firebaseapp.com",
-            projectId: "ingenio-mahuixtlan",
-            storageBucket: "ingenio-mahuixtlan.firebasestorage.app",
-            messagingSenderId: "835526438503",
-            appId: "1:835526438503:web:851ffb19a5e966e759eec2"
+    async function handleExcelUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const status = document.getElementById('uploadStatus');
+        status.textContent = 'Procesando archivo...';
+        status.classList.remove('hidden');
+
+        try {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data);
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+            status.textContent = `Guardando ${jsonData.length} productores en Firebase...`;
+
+            for (const row of jsonData) {
+                const docId = `${row.ZONA}_${row.CAMPO}`;
+                await setDoc(doc(db, 'productores', docId), row);
+            }
+
+            await loadProductoresDB();
+            status.textContent = `✓ ${jsonData.length} productores importados exitosamente`;
+            status.className = 'alert alert-success';
+            
+            setTimeout(() => {
+                status.classList.add('hidden');
+            }, 5000);
+            
+        } catch (error) {
+            console.error('Error:', error);
+            status.textContent = '✗ Error al importar archivo';
+            status.className = 'alert alert-error';
+        }
+
+        event.target.value = '';
+    }
+
+    function showSection(section) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(section + 'Section').classList.add('active');
+        if (section === 'reports') updateStats();
+        else if (section === 'data') loadDataTable();
+        else if (section === 'weekly') {
+            populateZonaFilter();
+            populateZafraFilter();
+        }
+    }
+
+    async function saveRecord() {
+        const laboresData = {};
+        laboresList.forEach(labor => {
+            const cb = document.getElementById(labor.id);
+            const dt = document.getElementById(labor.id + '_fecha');
+            laboresData[labor.id] = {
+                realizada: cb.checked,
+                fecha: cb.checked && dt.value ? dt.value : null
+            };
+        });
+
+        const formData = {
+            zafra_ciclo: document.getElementById('zafra_ciclo').value,
+            zona: document.getElementById('zona').value,
+            campo: document.getElementById('campo').value,
+            id_prod: document.getElementById('id_prod').value,
+            nombre_productor: document.getElementById('nombre_productor').value,
+            superficie: document.getElementById('superficie').value,
+            ciclo: document.getElementById('ciclo').value,
+            regimen: document.getElementById('regimen').value,
+            fecha_avance: document.getElementById('fecha_avance').value,
+            observaciones: document.getElementById('observaciones').value,
+            timestamp: new Date().toISOString(),
+            user: currentUser,
+            labores: laboresData
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        let userData = [];
-        let productoresDB = [];
-        let editingDocId = null;
-        let currentUser = '';
-        const adminUsers = ['admin@ingenio.com', 'siembras@ingenio.com'];
-
-        const laboresList = [
-            {id: 'desmonte', name: 'Desmonte'},
-            {id: 'primer_barbecho', name: '1er. Barbecho'},
-            {id: 'segundo_barbecho', name: '2do. Barbecho'},
-            {id: 'ap_encalado', name: 'Ap./Encalado'},
-            {id: 'primera_rastra', name: '1ra. Rastra'},
-            {id: 'surco', name: 'Surco'},
-            {id: 'siembra_amp', name: 'Siembra-Amp.'},
-            {id: 'siembra_rep', name: 'Siembra-Rep.'},
-            {id: 'jta_quema', name: 'Jta. Quema'},
-            {id: 'primer_cultivo', name: '1er. Cultivo'},
-            {id: 'primer_cultivo_yta', name: '1er. Cultivo/Yta.'},
-            {id: 'primera_ap_fertilizante', name: '1ra. Ap/Fertilizante'},
-            {id: 'primera_ap_fert_mec', name: '1ra. Ap/Fert.Mec.'},
-            {id: 'primer_riego', name: '1er. Riego'},
-            {id: 'subsuelo_ctral', name: 'Subsuelo/Ctral.'},
-            {id: 'primera_limpia', name: '1ra. Limpia'},
-            {id: 'primera_ap_herbicida', name: '1ra. Ap/Herbicida'},
-            {id: 'segunda_ap_ferti', name: '2da. Ap/Ferti.'},
-            {id: 'segundo_riego', name: '2do. Riego'},
-            {id: 'segunda_limpia', name: '2da. Limpia'},
-            {id: 'segunda_ap_herbicida', name: '2da. Ap/Herbicida'},
-            {id: 'resiembra', name: 'Resiembra'}
-        ];
-
-        function initLabores() {
-            const container = document.getElementById('laboresGrid');
-            container.innerHTML = laboresList.map(labor => `
-                <div class="labor-item">
-                    <div class="labor-header">
-                        <label class="labor-label">
-                            <input type="checkbox" id="${labor.id}" class="labor-checkbox" onchange="window.toggleLaborDate('${labor.id}')">
-                            <span class="labor-text">${labor.name}</span>
-                        </label>
-                    </div>
-                    <div class="labor-date-container">
-                        <input type="date" id="${labor.id}_fecha" class="labor-date-input" disabled>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function isAdmin(email) {
-            return adminUsers.includes(email?.toLowerCase());
-        }
-
-        function toggleLaborDate(laborId) {
-            const cb = document.getElementById(laborId);
-            const dt = document.getElementById(laborId + '_fecha');
-            if (cb && dt) {
-                dt.disabled = !cb.checked;
-                if (!cb.checked) dt.value = '';
-            }
-        }
-
-        window.toggleLaborDate = toggleLaborDate;
-        window.handleLogin = handleLogin;
-        window.logout = logout;
-        window.showSection = showSection;
-        window.saveRecord = saveRecord;
-        window.clearForm = clearForm;
-        window.cancelEdit = cancelEdit;
-        window.editRecord = editRecord;
-        window.deleteRecord = deleteRecord;
-        window.exportToExcel = exportToExcel;
-        window.searchProductor = searchProductor;
-        window.selectProductor = selectProductor;
-        window.clearProductorSearch = clearProductorSearch;
-        window.handleExcelUpload = handleExcelUpload;
-        window.generateWeeklyReport = generateWeeklyReport;
-        window.exportWeeklyReport = exportWeeklyReport;
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user.email;
-                document.getElementById('currentUser').textContent = user.email;
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                
-                if (isAdmin(currentUser)) {
-                    document.getElementById('adminControls').classList.remove('hidden');
-                }
-                
-                initLabores();
-                loadDataFromFirebase();
-                loadProductoresDB();
-                populateZonaFilter();
-                showSection('capture');
+        const required = ['zafra_ciclo', 'zona', 'campo', 'id_prod', 'nombre_productor', 'superficie', 'ciclo', 'regimen', 'fecha_avance'];
+        let valid = true;
+        required.forEach(f => {
+            const el = document.getElementById(f);
+            if (!formData[f]) {
+                el.style.borderColor = '#dc3545';
+                valid = false;
             } else {
-                document.getElementById('loginSection').classList.remove('hidden');
-                document.getElementById('mainApp').classList.add('hidden');
+                el.style.borderColor = '#e0e0e0';
             }
         });
 
-        async function handleLogin() {
-            const email = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const alert = document.getElementById('loginAlert');
-            const btn = document.getElementById('loginBtn');
-
-            if (!email || !password) {
-                alert.textContent = 'Complete todos los campos';
-                alert.classList.remove('hidden');
-                return;
-            }
-
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="loading-spinner"></span> Entrando...';
-            }
-
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                alert.classList.add('hidden');
-            } catch (error) {
-                let msg = 'Error al iniciar sesión';
-                if (error.code === 'auth/invalid-credential') msg = 'Credenciales inválidas';
-                else if (error.code === 'auth/too-many-requests') msg = 'Demasiados intentos';
-                alert.textContent = msg;
-                alert.classList.remove('hidden');
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = 'Entrar';
-                }
-            }
+        if (!valid) {
+            showAlert('Complete todos los campos requeridos', 'error');
+            return;
         }
 
-        async function logout() {
-            try {
-                await signOut(auth);
-                document.getElementById('username').value = '';
-                document.getElementById('password').value = '';
-                clearForm();
-                userData = [];
-                productoresDB = [];
-            } catch (error) {
-                showAlert('Error al cerrar sesión', 'error');
+        let invalidLabores = [];
+        laboresList.forEach(labor => {
+            const cb = document.getElementById(labor.id);
+            const dt = document.getElementById(labor.id + '_fecha');
+            if (cb.checked && !dt.value) {
+                invalidLabores.push(labor.id);
+                dt.style.borderColor = '#dc3545';
+            } else {
+                dt.style.borderColor = '#e0e0e0';
             }
+        });
+
+        if (invalidLabores.length > 0) {
+            showAlert('Agregue fecha para todas las labores seleccionadas', 'error');
+            return;
         }
 
-        async function loadDataFromFirebase() {
-            try {
-                const q = query(collection(db, 'labores_agricolas'), orderBy('timestamp', 'desc'));
-                const querySnapshot = await getDocs(q);
-                userData = [];
-                querySnapshot.forEach((d) => {
-                    const data = { id: d.id, ...d.data() };
-                    if (isAdmin(currentUser) || data.user === currentUser) {
-                        userData.push(data);
+        try {
+            if (editingDocId) {
+                await updateDoc(doc(db, 'labores_agricolas', editingDocId), formData);
+                showAlert('Registro actualizado', 'success');
+                editingDocId = null;
+                document.getElementById('cancelEdit').classList.add('hidden');
+            } else {
+                await addDoc(collection(db, 'labores_agricolas'), formData);
+                showAlert('Registro guardado', 'success');
+            }
+            await loadDataFromFirebase();
+            clearForm();
+        } catch (error) {
+            console.error('Error:', error);
+            showAlert('Error al guardar', 'error');
+        }
+    }
+
+    function clearForm() {
+        ['zafra_ciclo', 'zona', 'campo', 'id_prod', 'nombre_productor', 'superficie', 'ciclo', 'regimen', 'fecha_avance', 'observaciones'].forEach(f => {
+            const el = document.getElementById(f);
+            if (el) {
+                el.value = '';
+                el.style.borderColor = '#e0e0e0';
+            }
+        });
+        laboresList.forEach(labor => {
+            const cb = document.getElementById(labor.id);
+            const dt = document.getElementById(labor.id + '_fecha');
+            if (cb) cb.checked = false;
+            if (dt) {
+                dt.value = '';
+                dt.disabled = true;
+                dt.style.borderColor = '#e0e0e0';
+            }
+        });
+        editingDocId = null;
+        document.getElementById('cancelEdit').classList.add('hidden');
+        document.getElementById('fecha_avance').value = new Date().toISOString().split('T')[0];
+    }
+
+    function cancelEdit() {
+        clearForm();
+        editingDocId = null;
+        document.getElementById('cancelEdit').classList.add('hidden');
+        showAlert('Edición cancelada', 'success');
+    }
+
+    function showAlert(message, type) {
+        const alert = document.getElementById('formAlert');
+        alert.className = `alert alert-${type === 'error' ? 'error' : 'success'}`;
+        alert.textContent = message;
+        alert.style.display = 'block';
+        setTimeout(() => alert.style.display = 'none', 3000);
+    }
+
+    function updateStats() {
+        if (userData.length === 0) {
+            document.getElementById('totalSuperficie').textContent = '0';
+            document.getElementById('avgLaboresPorProductor').textContent = '0';
+            document.getElementById('productoresActivos').textContent = '0';
+            document.getElementById('porcentajeAvanceGeneral').textContent = '0%';
+            return;
+        }
+
+        const totalSup = userData.reduce((sum, r) => sum + parseFloat(r.superficie || 0), 0);
+        let totalLab = 0;
+        userData.forEach(r => {
+            if (r.labores) {
+                Object.values(r.labores).forEach(l => {
+                    if (l.realizada || l === true) totalLab++;
+                });
+            }
+        });
+
+        const avgLab = (totalLab / userData.length).toFixed(1);
+        const pctAvance = ((totalLab / (userData.length * 22)) * 100).toFixed(1);
+
+        document.getElementById('totalSuperficie').textContent = totalSup.toFixed(1);
+        document.getElementById('avgLaboresPorProductor').textContent = avgLab;
+        document.getElementById('productoresActivos').textContent = userData.length;
+        document.getElementById('porcentajeAvanceGeneral').textContent = pctAvance + '%';
+
+        generateLaborReport();
+        generateZonaReport();
+        generateCicloReport();
+    }
+
+    function generateLaborReport() {
+        const laborNames = {
+            desmonte: 'Desmonte', primer_barbecho: '1er. Barbecho', segundo_barbecho: '2do. Barbecho',
+            ap_encalado: 'Ap./Encalado', primera_rastra: '1ra. Rastra', surco: 'Surco',
+            siembra_amp: 'Siembra-Amp.', siembra_rep: 'Siembra-Rep.', jta_quema: 'Jta. Quema',
+            primer_cultivo: '1er. Cultivo', primer_cultivo_yta: '1er. Cultivo/Yta.',
+            primera_ap_fertilizante: '1ra. Ap/Fertilizante', primera_ap_fert_mec: '1ra. Ap/Fert.Mec.',
+            primer_riego: '1er. Riego', subsuelo_ctral: 'Subsuelo/Ctral.', primera_limpia: '1ra. Limpia',
+            primera_ap_herbicida: '1ra. Ap/Herbicida', segunda_ap_ferti: '2da. Ap/Ferti.',
+            segundo_riego: '2do. Riego', segunda_limpia: '2da. Limpia',
+            segunda_ap_herbicida: '2da. Ap/Herbicida', resiembra: 'Resiembra'
+        };
+
+        const stats = {};
+        Object.keys(laborNames).forEach(l => stats[l] = { sup: 0, prod: 0 });
+
+        userData.forEach(r => {
+            const sup = parseFloat(r.superficie || 0);
+            if (r.labores) {
+                Object.keys(laborNames).forEach(l => {
+                    const ld = r.labores[l];
+                    const real = ld?.realizada || ld === true;
+                    if (real) {
+                        stats[l].sup += sup;
+                        stats[l].prod += 1;
                     }
                 });
-                console.log(`${userData.length} registros cargados`);
-            } catch (error) {
-                console.error('Error:', error);
-                showAlert('Error al cargar datos', 'error');
             }
-        }
+        });
 
-        async function loadProductoresDB() {
-            try {
-                const querySnapshot = await getDocs(collection(db, 'productores'));
-                productoresDB = [];
-                querySnapshot.forEach((d) => {
-                    productoresDB.push({ id: d.id, ...d.data() });
+        const totalSup = userData.reduce((sum, r) => sum + parseFloat(r.superficie || 0), 0);
+        let html = '<table class="data-table" style="font-size: 13px;"><thead><tr><th>Labor</th><th>Superficie (Ha)</th><th>Productores</th><th>% Avance</th></tr></thead><tbody>';
+
+        Object.keys(laborNames).forEach(l => {
+            const s = stats[l];
+            const pct = totalSup > 0 ? ((s.sup / totalSup) * 100).toFixed(1) : 0;
+            html += `<tr><td><strong>${laborNames[l]}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('laborSuperficieTable').innerHTML = html;
+    }
+
+    function generateZonaReport() {
+        const zonaStats = {};
+        userData.forEach(r => {
+            const z = r.zona || 'Sin zona';
+            const sup = parseFloat(r.superficie || 0);
+            if (!zonaStats[z]) zonaStats[z] = { sup: 0, prod: 0, lab: 0 };
+            zonaStats[z].sup += sup;
+            zonaStats[z].prod += 1;
+            if (r.labores) {
+                Object.values(r.labores).forEach(l => {
+                    if (l.realizada || l === true) zonaStats[z].lab++;
                 });
-                console.log(`${productoresDB.length} productores en base de datos`);
-            } catch (error) {
-                console.error('Error al cargar productores:', error);
             }
-        }
+        });
 
-        function searchProductor() {
-            const searchTerm = document.getElementById('searchProductor').value.trim().toUpperCase();
-            if (!searchTerm) {
-                showAlert('Ingrese un término de búsqueda', 'error');
-                return;
-            }
+        let html = '<table class="data-table"><thead><tr><th>Zona</th><th>Superficie (Ha)</th><th>Productores</th><th>Labores Prom.</th><th>% Avance</th></tr></thead><tbody>';
 
-            const results = productoresDB.filter(p => 
-                p.CAMPO?.toString().toUpperCase().includes(searchTerm) || 
-                p.PRODUCTOR?.toUpperCase().includes(searchTerm)
-            );
+        Object.keys(zonaStats).sort().forEach(z => {
+            const s = zonaStats[z];
+            const avg = (s.lab / s.prod).toFixed(1);
+            const pct = ((s.lab / (s.prod * 22)) * 100).toFixed(1);
+            html += `<tr><td><strong>Zona ${z}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/22</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
+        });
 
-            const container = document.getElementById('searchResults');
-            
-            if (results.length === 0) {
-                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">No se encontraron resultados</div>';
-                container.classList.remove('hidden');
-                return;
-            }
+        html += '</tbody></table>';
+        document.getElementById('zonaAvanceTable').innerHTML = html;
+    }
 
-            container.innerHTML = results.map((p, i) => `
-                <div class="search-result-item" onclick="selectProductor(${i}, ${JSON.stringify(p).replace(/"/g, '&quot;')})">
-                    <strong>${p.PRODUCTOR}</strong><br>
-                    <small>Campo: ${p.CAMPO} | Zona: ${p.ZONA} | ID: ${p.ID_PRODUCTOR} | Sup: ${p.SUPERFICIE} Ha</small>
-                </div>
-            `).join('');
-            
-            container.classList.remove('hidden');
-        }
+    function generateCicloReport() {
+        const cicloStats = { PLANTA: { sup: 0, prod: 0, lab: 0 }, SOCA: { sup: 0, prod: 0, lab: 0 }, RESOCA: { sup: 0, prod: 0, lab: 0 } };
 
-        function selectProductor(index, productor) {
-            document.getElementById('zafra_ciclo').value = productor.ZAFRA || '';
-            document.getElementById('zona').value = productor.ZONA || '';
-            document.getElementById('campo').value = productor.CAMPO || '';
-            document.getElementById('id_prod').value = productor.ID_PRODUCTOR || '';
-            document.getElementById('nombre_productor').value = productor.PRODUCTOR || '';
-            document.getElementById('superficie').value = productor.SUPERFICIE || '';
-            document.getElementById('ciclo').value = productor.CICLO || '';
-            document.getElementById('regimen').value = productor.REGIMEN || '';
-            
-            document.getElementById('searchResults').classList.add('hidden');
-            document.getElementById('searchProductor').value = '';
-            
-            showAlert('Productor seleccionado correctamente', 'success');
-        }
-
-        function clearProductorSearch() {
-            document.getElementById('searchProductor').value = '';
-            document.getElementById('searchResults').classList.add('hidden');
-            clearForm();
-        }
-
-        async function handleExcelUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const status = document.getElementById('uploadStatus');
-            status.textContent = 'Procesando archivo...';
-            status.classList.remove('hidden');
-
-            try {
-                const data = await file.arrayBuffer();
-                const workbook = XLSX.read(data);
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-
-                status.textContent = `Guardando ${jsonData.length} productores en Firebase...`;
-
-                for (const row of jsonData) {
-                    const docId = `${row.ZONA}_${row.CAMPO}`;
-                    await setDoc(doc(db, 'productores', docId), row);
-                }
-
-                await loadProductoresDB();
-                status.textContent = `✓ ${jsonData.length} productores importados exitosamente`;
-                status.className = 'alert alert-success';
-                
-                setTimeout(() => {
-                    status.classList.add('hidden');
-                }, 5000);
-                
-            } catch (error) {
-                console.error('Error:', error);
-                status.textContent = '✗ Error al importar archivo';
-                status.className = 'alert alert-error';
-            }
-
-            event.target.value = '';
-        }
-
-        function showSection(section) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById(section + 'Section').classList.add('active');
-            if (section === 'reports') updateStats();
-            else if (section === 'data') loadDataTable();
-            else if (section === 'weekly') populateZonaFilter();
-        }
- 
-         async function saveRecord() {
-            const laboresData = {};
-            laboresList.forEach(labor => {
-                const cb = document.getElementById(labor.id);
-                const dt = document.getElementById(labor.id + '_fecha');
-                laboresData[labor.id] = {
-                    realizada: cb.checked,
-                    fecha: cb.checked && dt.value ? dt.value : null
-                };
-            });
-
-            const formData = {
-                zafra_ciclo: document.getElementById('zafra_ciclo').value,
-                zona: document.getElementById('zona').value,
-                campo: document.getElementById('campo').value,
-                id_prod: document.getElementById('id_prod').value,
-                nombre_productor: document.getElementById('nombre_productor').value,
-                superficie: document.getElementById('superficie').value,
-                ciclo: document.getElementById('ciclo').value,
-                regimen: document.getElementById('regimen').value,
-                fecha_avance: document.getElementById('fecha_avance').value,
-                observaciones: document.getElementById('observaciones').value,
-                timestamp: new Date().toISOString(),
-                user: currentUser,
-                labores: laboresData
-            };
-
-            const required = ['zafra_ciclo', 'zona', 'campo', 'id_prod', 'nombre_productor', 'superficie', 'ciclo', 'regimen', 'fecha_avance'];
-            let valid = true;
-            required.forEach(f => {
-                const el = document.getElementById(f);
-                if (!formData[f]) {
-                    el.style.borderColor = '#dc3545';
-                    valid = false;
-                } else {
-                    el.style.borderColor = '#e0e0e0';
-                }
-            });
-
-            if (!valid) {
-                showAlert('Complete todos los campos requeridos', 'error');
-                return;
-            }
-
-            let invalidLabores = [];
-            laboresList.forEach(labor => {
-                const cb = document.getElementById(labor.id);
-                const dt = document.getElementById(labor.id + '_fecha');
-                if (cb.checked && !dt.value) {
-                    invalidLabores.push(labor.id);
-                    dt.style.borderColor = '#dc3545';
-                } else {
-                    dt.style.borderColor = '#e0e0e0';
-                }
-            });
-
-            if (invalidLabores.length > 0) {
-                showAlert('Agregue fecha para todas las labores seleccionadas', 'error');
-                return;
-            }
-
-            try {
-                if (editingDocId) {
-                    await updateDoc(doc(db, 'labores_agricolas', editingDocId), formData);
-                    showAlert('Registro actualizado', 'success');
-                    editingDocId = null;
-                    document.getElementById('cancelEdit').classList.add('hidden');
-                } else {
-                    await addDoc(collection(db, 'labores_agricolas'), formData);
-                    showAlert('Registro guardado', 'success');
-                }
-                await loadDataFromFirebase();
-                clearForm();
-            } catch (error) {
-                console.error('Error:', error);
-                showAlert('Error al guardar', 'error');
-            }
-        }
-
-        function clearForm() {
-            ['zafra_ciclo', 'zona', 'campo', 'id_prod', 'nombre_productor', 'superficie', 'ciclo', 'regimen', 'fecha_avance', 'observaciones'].forEach(f => {
-                const el = document.getElementById(f);
-                if (el) {
-                    el.value = '';
-                    el.style.borderColor = '#e0e0e0';
-                }
-            });
-            laboresList.forEach(labor => {
-                const cb = document.getElementById(labor.id);
-                const dt = document.getElementById(labor.id + '_fecha');
-                if (cb) cb.checked = false;
-                if (dt) {
-                    dt.value = '';
-                    dt.disabled = true;
-                    dt.style.borderColor = '#e0e0e0';
-                }
-            });
-            editingDocId = null;
-            document.getElementById('cancelEdit').classList.add('hidden');
-            document.getElementById('fecha_avance').value = new Date().toISOString().split('T')[0];
-        }
-
-        function cancelEdit() {
-            clearForm();
-            editingDocId = null;
-            document.getElementById('cancelEdit').classList.add('hidden');
-            showAlert('Edición cancelada', 'success');
-        }
-
-        function showAlert(message, type) {
-            const alert = document.getElementById('formAlert');
-            alert.className = `alert alert-${type === 'error' ? 'error' : 'success'}`;
-            alert.textContent = message;
-            alert.style.display = 'block';
-            setTimeout(() => alert.style.display = 'none', 3000);
-        }
-
-        function updateStats() {
-            if (userData.length === 0) {
-                document.getElementById('totalSuperficie').textContent = '0';
-                document.getElementById('avgLaboresPorProductor').textContent = '0';
-                document.getElementById('productoresActivos').textContent = '0';
-                document.getElementById('porcentajeAvanceGeneral').textContent = '0%';
-                return;
-            }
-
-            const totalSup = userData.reduce((sum, r) => sum + parseFloat(r.superficie || 0), 0);
-            let totalLab = 0;
-            userData.forEach(r => {
+        userData.forEach(r => {
+            const c = r.ciclo;
+            const sup = parseFloat(r.superficie || 0);
+            if (cicloStats[c]) {
+                cicloStats[c].sup += sup;
+                cicloStats[c].prod += 1;
                 if (r.labores) {
                     Object.values(r.labores).forEach(l => {
-                        if (l.realizada || l === true) totalLab++;
+                        if (l.realizada || l === true) cicloStats[c].lab++;
                     });
                 }
-            });
+            }
+        });
 
-            const avgLab = (totalLab / userData.length).toFixed(1);
-            const pctAvance = ((totalLab / (userData.length * 22)) * 100).toFixed(1);
+        let html = '<table class="data-table"><thead><tr><th>Ciclo</th><th>Superficie (Ha)</th><th>Productores</th><th>Labores Prom.</th><th>% Avance</th></tr></thead><tbody>';
 
-            document.getElementById('totalSuperficie').textContent = totalSup.toFixed(1);
-            document.getElementById('avgLaboresPorProductor').textContent = avgLab;
-            document.getElementById('productoresActivos').textContent = userData.length;
-            document.getElementById('porcentajeAvanceGeneral').textContent = pctAvance + '%';
-
-            generateLaborReport();
-            generateZonaReport();
-            generateCicloReport();
-        }
-
-        function generateLaborReport() {
-            const laborNames = {
-                desmonte: 'Desmonte', primer_barbecho: '1er. Barbecho', segundo_barbecho: '2do. Barbecho',
-                ap_encalado: 'Ap./Encalado', primera_rastra: '1ra. Rastra', surco: 'Surco',
-                siembra_amp: 'Siembra-Amp.', siembra_rep: 'Siembra-Rep.', jta_quema: 'Jta. Quema',
-                primer_cultivo: '1er. Cultivo', primer_cultivo_yta: '1er. Cultivo/Yta.',
-                primera_ap_fertilizante: '1ra. Ap/Fertilizante', primera_ap_fert_mec: '1ra. Ap/Fert.Mec.',
-                primer_riego: '1er. Riego', subsuelo_ctral: 'Subsuelo/Ctral.', primera_limpia: '1ra. Limpia',
-                primera_ap_herbicida: '1ra. Ap/Herbicida', segunda_ap_ferti: '2da. Ap/Ferti.',
-                segundo_riego: '2do. Riego', segunda_limpia: '2da. Limpia',
-                segunda_ap_herbicida: '2da. Ap/Herbicida', resiembra: 'Resiembra'
-            };
-
-            const stats = {};
-            Object.keys(laborNames).forEach(l => stats[l] = { sup: 0, prod: 0 });
-
-            userData.forEach(r => {
-                const sup = parseFloat(r.superficie || 0);
-                if (r.labores) {
-                    Object.keys(laborNames).forEach(l => {
-                        const ld = r.labores[l];
-                        const real = ld?.realizada || ld === true;
-                        if (real) {
-                            stats[l].sup += sup;
-                            stats[l].prod += 1;
-                        }
-                    });
-                }
-            });
-
-            const totalSup = userData.reduce((sum, r) => sum + parseFloat(r.superficie || 0), 0);
-            let html = '<table class="data-table" style="font-size: 13px;"><thead><tr><th>Labor</th><th>Superficie (Ha)</th><th>Productores</th><th>% Avance</th></tr></thead><tbody>';
-
-            Object.keys(laborNames).forEach(l => {
-                const s = stats[l];
-                const pct = totalSup > 0 ? ((s.sup / totalSup) * 100).toFixed(1) : 0;
-                html += `<tr><td><strong>${laborNames[l]}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
-            });
-
-            html += '</tbody></table>';
-            document.getElementById('laborSuperficieTable').innerHTML = html;
-        }
-
-        function generateZonaReport() {
-            const zonaStats = {};
-            userData.forEach(r => {
-                const z = r.zona || 'Sin zona';
-                const sup = parseFloat(r.superficie || 0);
-                if (!zonaStats[z]) zonaStats[z] = { sup: 0, prod: 0, lab: 0 };
-                zonaStats[z].sup += sup;
-                zonaStats[z].prod += 1;
-                if (r.labores) {
-                    Object.values(r.labores).forEach(l => {
-                        if (l.realizada || l === true) zonaStats[z].lab++;
-                    });
-                }
-            });
-
-            let html = '<table class="data-table"><thead><tr><th>Zona</th><th>Superficie (Ha)</th><th>Productores</th><th>Labores Prom.</th><th>% Avance</th></tr></thead><tbody>';
-
-            Object.keys(zonaStats).sort().forEach(z => {
-                const s = zonaStats[z];
+        Object.keys(cicloStats).forEach(c => {
+            const s = cicloStats[c];
+            if (s.prod > 0) {
                 const avg = (s.lab / s.prod).toFixed(1);
                 const pct = ((s.lab / (s.prod * 22)) * 100).toFixed(1);
-                html += `<tr><td><strong>Zona ${z}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/22</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
-            });
-
-            html += '</tbody></table>';
-            document.getElementById('zonaAvanceTable').innerHTML = html;
-        }
-
-        function generateCicloReport() {
-            const cicloStats = { PLANTA: { sup: 0, prod: 0, lab: 0 }, SOCA: { sup: 0, prod: 0, lab: 0 }, RESOCA: { sup: 0, prod: 0, lab: 0 } };
-
-            userData.forEach(r => {
-                const c = r.ciclo;
-                const sup = parseFloat(r.superficie || 0);
-                if (cicloStats[c]) {
-                    cicloStats[c].sup += sup;
-                    cicloStats[c].prod += 1;
-                    if (r.labores) {
-                        Object.values(r.labores).forEach(l => {
-                            if (l.realizada || l === true) cicloStats[c].lab++;
-                        });
-                    }
-                }
-            });
-
-            let html = '<table class="data-table"><thead><tr><th>Ciclo</th><th>Superficie (Ha)</th><th>Productores</th><th>Labores Prom.</th><th>% Avance</th></tr></thead><tbody>';
-
-            Object.keys(cicloStats).forEach(c => {
-                const s = cicloStats[c];
-                if (s.prod > 0) {
-                    const avg = (s.lab / s.prod).toFixed(1);
-                    const pct = ((s.lab / (s.prod * 22)) * 100).toFixed(1);
-                    html += `<tr><td><strong>${c}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/22</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
-                }
-            });
-
-            html += '</tbody></table>';
-            document.getElementById('cicloComparativa').innerHTML = html;
-        }
-
-        function loadDataTable() {
-            const tbody = document.getElementById('dataTableBody');
-            tbody.innerHTML = '';
-            userData.forEach((r, i) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${r.id_prod}</td>
-                    <td>${r.nombre_productor}</td>
-                    <td>${r.zona}</td>
-                    <td>${r.campo}</td>
-                    <td>${r.superficie} Ha</td>
-                    <td>${r.ciclo}</td>
-                    <td>${new Date(r.fecha_avance).toLocaleDateString()}</td>
-                    <td>
-                        <button onclick="editRecord(${i})" class="action-btn edit-btn">✏️ Editar</button>
-                        <button onclick="deleteRecord(${i})" class="action-btn delete-btn">🗑️ Eliminar</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        function editRecord(index) {
-            const r = userData[index];
-            editingDocId = r.id;
-
-            document.getElementById('zafra_ciclo').value = r.zafra_ciclo;
-            document.getElementById('zona').value = r.zona;
-            document.getElementById('campo').value = r.campo;
-            document.getElementById('id_prod').value = r.id_prod;
-            document.getElementById('nombre_productor').value = r.nombre_productor;
-            document.getElementById('superficie').value = r.superficie;
-            document.getElementById('ciclo').value = r.ciclo;
-            document.getElementById('regimen').value = r.regimen;
-            document.getElementById('fecha_avance').value = r.fecha_avance;
-            document.getElementById('observaciones').value = r.observaciones || '';
-
-            if (r.labores) {
-                Object.entries(r.labores).forEach(([k, v]) => {
-                    const cb = document.getElementById(k);
-                    const dt = document.getElementById(k + '_fecha');
-                    if (cb && dt) {
-                        const real = v.realizada !== undefined ? v.realizada : v;
-                        const fecha = v.fecha || '';
-                        cb.checked = real;
-                        dt.disabled = !real;
-                        dt.value = fecha;
-                    }
-                });
+                html += `<tr><td><strong>${c}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/22</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
             }
+        });
 
-            document.getElementById('cancelEdit').classList.remove('hidden');
-            showSection('capture');
-            showAlert('Registro cargado para edición', 'success');
-        }
+        html += '</tbody></table>';
+        document.getElementById('cicloComparativa').innerHTML = html;
+    }
 
-        async function deleteRecord(index) {
-            if (confirm('¿Eliminar este registro?')) {
-                const r = userData[index];
-                try {
-                    await deleteDoc(doc(db, 'labores_agricolas', r.id));
-                    showAlert('Registro eliminado', 'success');
-                    await loadDataFromFirebase();
-                    loadDataTable();
-                } catch (error) {
-                    console.error('Error:', error);
-                    showAlert('Error al eliminar', 'error');
-                }
-            }
-        }
-        
-        function populateZonaFilter() {
-            const zonas = [...new Set(userData.map(r => r.zona))].sort((a, b) => a - b);
-            const select = document.getElementById('filterZona');
-            select.innerHTML = '<option value="TODAS">TODAS LAS ZONAS</option>';
-            zonas.forEach(z => {
-                select.innerHTML += `<option value="${z}">ZONA ${z}</option>`;
-            });
-        }
-
-        function generateWeeklyReport() {
-            const zona = document.getElementById('filterZona').value;
-            const ciclo = document.getElementById('filterCiclo').value;
-            const fechaInicio = document.getElementById('fechaInicio').value;
-            const fechaFin = document.getElementById('fechaFin').value;
-
-            if (!fechaInicio || !fechaFin) {
-                showAlert('Seleccione las fechas de inicio y fin', 'error');
-                return;
-            }
-
-            const filteredData = userData.filter(r => {
-                const zonaMatch = zona === 'TODAS' || r.zona == zona;
-                let cicloMatch = false;
-                if (ciclo === 'SOCAS_RESOCAS') {
-                    cicloMatch = r.ciclo === 'SOCA' || r.ciclo === 'RESOCA';
-                } else if (ciclo === 'PLANTA') {
-                    cicloMatch = r.ciclo === 'PLANTA';
-                }
-                return zonaMatch && cicloMatch;
-            });
-
-            const laborStats = {};
-            laboresList.forEach(labor => {
-                laborStats[labor.id] = {
-                    nombre: labor.name,
-                    anterior: 0,
-                    semana: 0,
-                    total: 0
-                };
-            });
-
-            filteredData.forEach(r => {
-                const sup = parseFloat(r.superficie || 0);
-                if (r.labores) {
-                    Object.entries(r.labores).forEach(([laborId, laborData]) => {
-                        const realizada = laborData?.realizada || laborData === true;
-                        const fecha = laborData?.fecha;
-
-                        if (realizada && fecha) {
-                            const fechaLabor = new Date(fecha);
-                            const inicio = new Date(fechaInicio);
-                            const fin = new Date(fechaFin);
-
-                            if (laborStats[laborId]) {
-                                laborStats[laborId].total += sup;
-
-                                if (fechaLabor < inicio) {
-                                    laborStats[laborId].anterior += sup;
-                                } else if (fechaLabor >= inicio && fechaLabor <= fin) {
-                                    laborStats[laborId].semana += sup;
-                                    laborStats[laborId].anterior += sup;
-                                }
-                            }
-                        }
-                    });
-                }
-            });
-
-            const laboresConAvance = Object.entries(laborStats).filter(([id, stats]) => stats.total > 0);
-
-            let html = `
-                <div style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px;">
-                    <h2 style="text-align: center; color: rgb(34,116,71); margin-bottom: 10px;">AVANCE FISICO DE LABORES</h2>
-                    <h3 style="text-align: center; color: #333; margin-bottom: 10px;">CICLO: ${ciclo === 'SOCAS_RESOCAS' ? 'SOCAS Y RESOCAS' : 'PLANTAS'}</h3>
-                    <h3 style="text-align: center; color: #333; margin-bottom: 10px;">ZONA: ${zona === 'TODAS' ? 'TODAS' : zona}</h3>
-                    <h3 style="text-align: center; color: #333; margin-bottom: 20px;">SEMANA DEL ${new Date(fechaInicio).toLocaleDateString('es-MX')} AL ${new Date(fechaFin).toLocaleDateString('es-MX')}</h3>
-                    
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>LABOR</th>
-                                <th style="text-align: center;">Anterior</th>
-                                <th style="text-align: center;">Semana</th>
-                                <th style="text-align: center;">A la Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+    function loadDataTable() {
+        const tbody = document.getElementById('dataTableBody');
+        tbody.innerHTML = '';
+        userData.forEach((r, i) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${r.id_prod}</td>
+                <td>${r.nombre_productor}</td>
+                <td>${r.zona}</td>
+                <td>${r.campo}</td>
+                <td>${r.superficie} Ha</td>
+                <td>${r.ciclo}</td>
+                <td>${new Date(r.fecha_avance).toLocaleDateString()}</td>
+                <td>
+                    <button onclick="editRecord(${i})" class="action-btn edit-btn">✏️ Editar</button>
+                    <button onclick="deleteRecord(${i})" class="action-btn delete-btn">🗑️ Eliminar</button>
+                </td>
             `;
+            tbody.appendChild(row);
+        });
+    }
 
-            if (laboresConAvance.length === 0) {
-                html += '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #666;">No hay labores con avance en el período seleccionado</td></tr>';
-            } else {
-                laboresConAvance.forEach(([id, stats]) => {
-                    const anterior = stats.anterior - stats.semana;
-                    html += `
-                        <tr>
-                            <td><strong>${stats.nombre.toUpperCase()}</strong></td>
-                            <td style="text-align: center;">${anterior.toFixed(2)}</td>
-                            <td style="text-align: center;">${stats.semana.toFixed(2)}</td>
-                            <td style="text-align: center;">${stats.total.toFixed(2)}</td>
-                        </tr>
-                    `;
-                });
-            }
+    function editRecord(index) {
+        const r = userData[index];
+        editingDocId = r.id;
 
-            html += '</tbody></table></div>';
-            document.getElementById('weeklyReportContainer').innerHTML = html;
+        document.getElementById('zafra_ciclo').value = r.zafra_ciclo;
+        document.getElementById('zona').value = r.zona;
+        document.getElementById('campo').value = r.campo;
+        document.getElementById('id_prod').value = r.id_prod;
+        document.getElementById('nombre_productor').value = r.nombre_productor;
+        document.getElementById('superficie').value = r.superficie;
+        document.getElementById('ciclo').value = r.ciclo;
+        document.getElementById('regimen').value = r.regimen;
+        document.getElementById('fecha_avance').value = r.fecha_avance;
+        document.getElementById('observaciones').value = r.observaciones || '';
+
+        if (r.labores) {
+            Object.entries(r.labores).forEach(([k, v]) => {
+                const cb = document.getElementById(k);
+                const dt = document.getElementById(k + '_fecha');
+                if (cb && dt) {
+                    const real = v.realizada !== undefined ? v.realizada : v;
+                    const fecha = v.fecha || '';
+                    cb.checked = real;
+                    dt.disabled = !real;
+                    dt.value = fecha;
+                }
+            });
         }
 
-        function exportWeeklyReport() {
-            const zona = document.getElementById('filterZona').value;
-            const ciclo = document.getElementById('filterCiclo').value;
-            const fechaInicio = document.getElementById('fechaInicio').value;
-            const fechaFin = document.getElementById('fechaFin').value;
+        document.getElementById('cancelEdit').classList.remove('hidden');
+        showSection('capture');
+        showAlert('Registro cargado para edición', 'success');
+    }
 
-            if (!fechaInicio || !fechaFin) {
-                showAlert('Genere primero el informe', 'error');
-                return;
+    async function deleteRecord(index) {
+        if (confirm('¿Eliminar este registro?')) {
+            const r = userData[index];
+            try {
+                await deleteDoc(doc(db, 'labores_agricolas', r.id));
+                showAlert('Registro eliminado', 'success');
+                await loadDataFromFirebase();
+                loadDataTable();
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error al eliminar', 'error');
             }
+        }
+    }
 
-            const filteredData = userData.filter(r => {
-                const zonaMatch = zona === 'TODAS' || r.zona == zona;
-                let cicloMatch = false;
-                if (ciclo === 'SOCAS_RESOCAS') {
-                    cicloMatch = r.ciclo === 'SOCA' || r.ciclo === 'RESOCA';
-                } else if (ciclo === 'PLANTA') {
-                    cicloMatch = r.ciclo === 'PLANTA';
-                }
-                return zonaMatch && cicloMatch;
-            });
+    function populateZonaFilter() {
+        const zonas = [...new Set(userData.map(r => r.zona))].sort((a, b) => a - b);
+        const select = document.getElementById('filterZona');
+        select.innerHTML = '<option value="TODAS">TODAS LAS ZONAS</option>';
+        zonas.forEach(z => {
+            select.innerHTML += `<option value="${z}">ZONA ${z}</option>`;
+        });
+    }
 
-            const laborStats = {};
-            laboresList.forEach(labor => {
-                laborStats[labor.id] = { nombre: labor.name, anterior: 0, semana: 0, total: 0 };
-            });
+    function populateZafraFilter() {
+        const zafras = [...new Set(userData.map(r => r.zafra_ciclo))].sort().reverse();
+        const select = document.getElementById('filterZafra');
+        select.innerHTML = '<option value="">Seleccione una zafra</option>';
+        zafras.forEach(z => {
+            // Convertir formato 20252026 a 2025/2026
+            const formatted = z.substring(0, 4) + '/' + z.substring(4);
+            select.innerHTML += `<option value="${z}">${formatted}</option>`;
+        });
+    }
 
-            filteredData.forEach(r => {
-                const sup = parseFloat(r.superficie || 0);
-                if (r.labores) {
-                    Object.entries(r.labores).forEach(([laborId, laborData]) => {
-                        const realizada = laborData?.realizada || laborData === true;
-                        const fecha = laborData?.fecha;
+    function clearWeeklyFilters() {
+        document.getElementById('filterZafra').value = '';
+        document.getElementById('filterZona').value = 'TODAS';
+        document.getElementById('filterCiclo').value = 'SOCAS_RESOCAS';
+        document.getElementById('fechaInicio').value = '';
+        document.getElementById('fechaFin').value = '';
+        document.getElementById('weeklyReportContainer').innerHTML = '';
+        if (weeklyChart) {
+            weeklyChart.destroy();
+            weeklyChart = null;
+        }
+    }
 
-                        if (realizada && fecha) {
-                            const fechaLabor = new Date(fecha);
-                            const inicio = new Date(fechaInicio);
-                            const fin = new Date(fechaFin);
+    function generateWeeklyReport() {
+        const zafra = document.getElementById('filterZafra').value;
+        const zona = document.getElementById('filterZona').value;
+        const ciclo = document.getElementById('filterCiclo').value;
+        const fechaInicio = document.getElementById('fechaInicio').value;
+        const fechaFin = document.getElementById('fechaFin').value;
 
-                            if (laborStats[laborId]) {
-                                laborStats[laborId].total += sup;
-                                if (fechaLabor < inicio) {
-                                    laborStats[laborId].anterior += sup;
-                                } else if (fechaLabor >= inicio && fechaLabor <= fin) {
-                                    laborStats[laborId].semana += sup;
-                                    laborStats[laborId].anterior += sup;
-                                }
+        if (!zafra) {
+            showAlert('Seleccione una zafra', 'error');
+            return;
+        }
+
+        if (!fechaInicio || !fechaFin) {
+            showAlert('Seleccione las fechas de inicio y fin', 'error');
+            return;
+        }
+
+        const filteredData = userData.filter(r => {
+            const zafraMatch = r.zafra_ciclo === zafra;
+            const zonaMatch = zona === 'TODAS' || r.zona == zona;
+            let cicloMatch = false;
+            if (ciclo === 'SOCAS_RESOCAS') {
+                cicloMatch = r.ciclo === 'SOCA' || r.ciclo === 'RESOCA';
+            } else if (ciclo === 'PLANTA') {
+                cicloMatch = r.ciclo === 'PLANTA';
+            }
+            return zafraMatch && zonaMatch && cicloMatch;
+        });
+
+        const laborStats = {};
+        const cicloStats = { PLANTA: 0, SOCA: 0, RESOCA: 0 };
+        
+        laboresList.forEach(labor => {
+            laborStats[labor.id] = {
+                nombre: labor.name,
+                anterior: 0,
+                semana: 0,
+                total: 0
+            };
+        });
+
+        filteredData.forEach(r => {
+            const sup = parseFloat(r.superficie || 0);
+            
+            // Contar hectáreas por ciclo
+            if (cicloStats[r.ciclo] !== undefined) {
+                cicloStats[r.ciclo] += sup;
+            }
+            
+            if (r.labores) {
+                Object.entries(r.labores).forEach(([laborId, laborData]) => {
+                    const realizada = laborData?.realizada || laborData === true;
+                    const fecha = laborData?.fecha;
+
+                    if (realizada && fecha) {
+                        const fechaLabor = new Date(fecha);
+                        const inicio = new Date(fechaInicio);
+                        const fin = new Date(fechaFin);
+
+                        if (laborStats[laborId]) {
+                            laborStats[laborId].total += sup;
+
+                            if (fechaLabor < inicio) {
+                                laborStats[laborId].anterior += sup;
+                            } else if (fechaLabor >= inicio && fechaLabor <= fin) {
+                                laborStats[laborId].semana += sup;
+                                laborStats[laborId].anterior += sup;
                             }
                         }
-                    });
-                }
-            });
+                    }
+                });
+            }
+        });
 
-            const laboresConAvance = Object.entries(laborStats).filter(([id, stats]) => stats.total > 0);
+        const laboresConAvance = Object.entries(laborStats).filter(([id, stats]) => stats.total > 0);
 
-            let csv = "data:text/csv;charset=utf-8,";
-            csv += "AVANCE FISICO DE LABORES\n";
-            csv += `CICLO: ${ciclo === 'SOCAS_RESOCAS' ? 'SOCAS Y RESOCAS' : 'PLANTAS'}\n`;
-            csv += `ZONA: ${zona === 'TODAS' ? 'TODAS' : zona}\n`;
-            csv += `SEMANA DEL ${new Date(fechaInicio).toLocaleDateString('es-MX')} AL ${new Date(fechaFin).toLocaleDateString('es-MX')}\n\n`;
-            csv += "LABOR,Anterior,Semana,A la Fecha\n";
+        // Calcular totales y porcentajes de avance
+        const totalHectareas = Object.values(cicloStats).reduce((sum, ha) => sum + ha, 0);
+        const pctPlanta = totalHectareas > 0 ? ((cicloStats.PLANTA / totalHectareas) * 100).toFixed(1) : 0;
+        const pctSoca = totalHectareas > 0 ? ((cicloStats.SOCA / totalHectareas) * 100).toFixed(1) : 0;
+        const pctResoca = totalHectareas > 0 ? ((cicloStats.RESOCA / totalHectareas) * 100).toFixed(1) : 0;
 
+        // Formatear zafra para mostrar
+        const zafraFormatted = zafra.substring(0, 4) + '/' + zafra.substring(4);
+
+        let html = `
+            <div id="reportToPrint" style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px;">
+                <h2 style="text-align: center; color: rgb(34,116,71); margin-bottom: 10px;">AVANCE FISICO DE LABORES</h2>
+                <h3 style="text-align: center; color: #333; margin-bottom: 10px;">ZAFRA: ${zafraFormatted}</h3>
+                <h3 style="text-align: center; color: #333; margin-bottom: 10px;">CICLO: ${ciclo === 'SOCAS_RESOCAS' ? 'SOCAS Y RESOCAS' : 'PLANTAS'}</h3>
+                <h3 style="text-align: center; color: #333; margin-bottom: 10px;">ZONA: ${zona === 'TODAS' ? 'TODAS' : zona}</h3>
+                <h3 style="text-align: center; color: #333; margin-bottom: 20px;">SEMANA DEL ${new Date(fechaInicio).toLocaleDateString('es-MX')} AL ${new Date(fechaFin).toLocaleDateString('es-MX')}</h3>
+                
+                <div style="background: rgba(34,116,71,0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="color: rgb(34,116,71); margin-bottom: 10px;">📊 Resumen por Ciclo</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #10b981;">${cicloStats.PLANTA.toFixed(2)} Ha</div>
+                            <div style="color: #666; font-size: 14px;">Planta (${pctPlanta}%)</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #3b82f6;">${cicloStats.SOCA.toFixed(2)} Ha</div>
+                            <div style="color: #666; font-size: 14px;">Soca (${pctSoca}%)</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #f59e0b;">${cicloStats.RESOCA.toFixed(2)} Ha</div>
+                            <div style="color: #666; font-size: 14px;">Resoca (${pctResoca}%)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container" id="chartContainer">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>LABOR</th>
+                            <th style="text-align: center;">Anterior (Ha)</th>
+                            <th style="text-align: center;">Semana (Ha)</th>
+                            <th style="text-align: center;">A la Fecha (Ha)</th>
+                            <th style="text-align: center;">% Avance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        if (laboresConAvance.length === 0) {
+            html += '<tr><td colspan="5" style="text-align: center; padding: 30px; color: #666;">No hay labores con avance en el período seleccionado</td></tr>';
+        } else {
+            const totalSuperficie = filteredData.reduce((sum, r) => sum + parseFloat(r.superficie || 0), 0);
+            
             laboresConAvance.forEach(([id, stats]) => {
                 const anterior = stats.anterior - stats.semana;
-                csv += `"${stats.nombre}",${anterior.toFixed(2)},${stats.semana.toFixed(2)},${stats.total.toFixed(2)}\n`;
+                const pctAvance = totalSuperficie > 0 ? ((stats.total / totalSuperficie) * 100).toFixed(1) : 0;
+                html += `
+                    <tr>
+                        <td><strong>${stats.nombre.toUpperCase()}</strong></td>
+                        <td style="text-align: center;">${anterior.toFixed(2)}</td>
+                        <td style="text-align: center;">${stats.semana.toFixed(2)}</td>
+                        <td style="text-align: center;">${stats.total.toFixed(2)}</td>
+                        <td style="text-align: center;">${pctAvance}%</td>
+                    </tr>
+                `;
             });
-
-            const link = document.createElement("a");
-            link.setAttribute("href", encodeURI(csv));
-            link.setAttribute("download", `informe_semanal_${zona}_${ciclo}_${fechaInicio}_${fechaFin}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            showAlert('Informe exportado exitosamente', 'success');
         }
 
-        function exportToExcel() {
-            if (userData.length === 0) {
-                showAlert('No hay datos para exportar', 'error');
-                return;
+        html += '</tbody></table></div>';
+        document.getElementById('weeklyReportContainer').innerHTML = html;
+
+        // Generar gráfico
+        generateWeeklyChart(cicloStats, laboresConAvance);
+    }
+
+    function generateWeeklyChart(cicloStats, laboresConAvance) {
+        const canvas = document.getElementById('weeklyChart');
+        if (!canvas) return;
+
+        if (weeklyChart) {
+            weeklyChart.destroy();
+        }
+
+        const ctx = canvas.getContext('2d');
+        
+        // Preparar datos para el gráfico
+        const labels = ['Planta', 'Soca', 'Resoca'];
+        const hectareas = [cicloStats.PLANTA, cicloStats.SOCA, cicloStats.RESOCA];
+        const totalHectareas = hectareas.reduce((sum, ha) => sum + ha, 0);
+        const porcentajes = hectareas.map(ha => totalHectareas > 0 ? ((ha / totalHectareas) * 100).toFixed(1) : 0);
+
+        weeklyChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Hectáreas',
+                    data: hectareas,
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.7)',
+                        'rgba(59, 130, 246, 0.7)',
+                        'rgba(245, 158, 11, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgb(16, 185, 129)',
+                        'rgb(59, 130, 246)',
+                        'rgb(245, 158, 11)'
+                    ],
+                    borderWidth: 2,
+                    yAxisID: 'y'
+                }, {
+                    label: '% Avance',
+                    data: porcentajes,
+                    type: 'line',
+                    borderColor: 'rgb(55, 65, 81)',
+                    backgroundColor: 'rgba(55, 65, 81, 0.1)',
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointBackgroundColor: 'rgb(55, 65, 81)',
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Hectáreas y % Avance por Ciclo',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        color: 'rgb(34,116,71)'
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    if (context.dataset.label === '% Avance') {
+                                        label += context.parsed.y + '%';
+                                    } else {
+                                        label += context.parsed.y.toFixed(2) + ' Ha';
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Hectáreas',
+                            font: {
+                                weight: 'bold'
+                            }
+                        },
+                        beginAtZero: true
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: '% Avance',
+                            font: {
+                                weight: 'bold'
+                            }
+                        },
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    },
+                }
+            }
+        });
+    }
+
+    function printWeeklyReport() {
+        const reportContainer = document.getElementById('reportToPrint');
+        if (!reportContainer) {
+            showAlert('Genere primero el informe', 'error');
+            return;
+        }
+        window.print();
+    }
+
+    async function exportWeeklyToPDF() {
+        const reportContainer = document.getElementById('reportToPrint');
+        if (!reportContainer) {
+            showAlert('Genere primero el informe', 'error');
+            return;
+        }
+
+        try {
+            const { jsPDF } = window.jspdf;
+            
+            // Capturar el contenido como imagen
+            const canvas = await html2canvas(reportContainer, {
+                scale: 2,
+                useCORS: true,
+                logging: false
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            
+            const imgWidth = 190;
+            const pageHeight = 277;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 10;
+
+            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight + 10;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
             }
 
-            let csv = "data:text/csv;charset=utf-8,";
-            csv += "Zafra-Ciclo,Zona,Campo,ID-Prod,Productor,Superficie,Ciclo,Regimen,Fecha-Avance,Observaciones,Usuario,";
+            const zafra = document.getElementById('filterZafra').value;
+            const zona = document.getElementById('filterZona').value;
+            const ciclo = document.getElementById('filterCiclo').value;
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            
+            pdf.save(`informe_semanal_${zafra}_${zona}_${ciclo}_${fechaInicio}.pdf`);
+            showAlert('PDF generado exitosamente', 'success');
+        } catch (error) {
+            console.error('Error al generar PDF:', error);
+            showAlert('Error al generar PDF. Intente con Imprimir', 'error');
+        }
+    }
 
-            const labNames = ['Desmonte', '1er_Barbecho', '2do_Barbecho', 'Ap_Encalado', '1ra_Rastra', 'Surco',
-                'Siembra_Amp', 'Siembra_Rep', 'Jta_Quema', '1er_Cultivo', '1er_Cultivo_Yta',
-                '1ra_Ap_Fertilizante', '1ra_Ap_Fert_Mec', '1er_Riego', 'Subsuelo_Ctral',
-                '1ra_Limpia', '1ra_Ap_Herbicida', '2da_Ap_Ferti', '2do_Riego',
-                '2da_Limpia', '2da_Ap_Herbicida', 'Resiembra'];
+    function exportWeeklyReport() {
+        const zafra = document.getElementById('filterZafra').value;
+        const zona = document.getElementById('filterZona').value;
+        const ciclo = document.getElementById('filterCiclo').value;
+        const fechaInicio = document.getElementById('fechaInicio').value;
+        const fechaFin = document.getElementById('fechaFin').value;
 
-            labNames.forEach(l => csv += `${l}_Realizada,${l}_Fecha,`);
-            csv += "Total_Labores,Timestamp\n";
-
-            userData.forEach(r => {
-                const basic = [
-                    r.zafra_ciclo, r.zona, r.campo, r.id_prod,
-                    `"${r.nombre_productor}"`, r.superficie, r.ciclo, r.regimen,
-                    r.fecha_avance, `"${r.observaciones || ''}"`, r.user
-                ];
-
-                const labs = r.labores || {};
-                const labKeys = ['desmonte', 'primer_barbecho', 'segundo_barbecho', 'ap_encalado', 'primera_rastra',
-                    'surco', 'siembra_amp', 'siembra_rep', 'jta_quema', 'primer_cultivo', 'primer_cultivo_yta',
-                    'primera_ap_fertilizante', 'primera_ap_fert_mec', 'primer_riego', 'subsuelo_ctral',
-                    'primera_limpia', 'primera_ap_herbicida', 'segunda_ap_ferti', 'segundo_riego',
-                    'segunda_limpia', 'segunda_ap_herbicida', 'resiembra'];
-
-                let labData = [];
-                let total = 0;
-
-                labKeys.forEach(k => {
-                    const li = labs[k];
-                    const real = li?.realizada !== undefined ? li.realizada : (li === true);
-                    const fecha = li?.fecha || '';
-                    labData.push(real ? 1 : 0);
-                    labData.push(fecha);
-                    if (real) total++;
-                });
-
-                const row = [...basic, ...labData, total, r.timestamp].join(',');
-                csv += row + "\n";
-            });
-
-            const link = document.createElement("a");
-            link.setAttribute("href", encodeURI(csv));
-            link.setAttribute("download", `labores_agricolas_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            showAlert('Datos exportados (56 columnas)', 'success');
+        if (!zafra || !fechaInicio || !fechaFin) {
+            showAlert('Genere primero el informe', 'error');
+            return;
         }
 
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const term = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('#dataTableBody tr');
-            rows.forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+        const filteredData = userData.filter(r => {
+            const zafraMatch = r.zafra_ciclo === zafra;
+            const zonaMatch = zona === 'TODAS' || r.zona == zona;
+            let cicloMatch = false;
+            if (ciclo === 'SOCAS_RESOCAS') {
+                cicloMatch = r.ciclo === 'SOCA' || r.ciclo === 'RESOCA';
+            } else if (ciclo === 'PLANTA') {
+                cicloMatch = r.ciclo === 'PLANTA';
+            }
+            return zafraMatch && zonaMatch && cicloMatch;
+        });
+
+        const laborStats = {};
+        laboresList.forEach(labor => {
+            laborStats[labor.id] = { nombre: labor.name, anterior: 0, semana: 0, total: 0 };
+        });
+
+        filteredData.forEach(r => {
+            const sup = parseFloat(r.superficie || 0);
+            if (r.labores) {
+                Object.entries(r.labores).forEach(([laborId, laborData]) => {
+                    const realizada = laborData?.realizada || laborData === true;
+                    const fecha = laborData?.fecha;
+
+                    if (realizada && fecha) {
+                        const fechaLabor = new Date(fecha);
+                        const inicio = new Date(fechaInicio);
+                        const fin = new Date(fechaFin);
+
+                        if (laborStats[laborId]) {
+                            laborStats[laborId].total += sup;
+                            if (fechaLabor < inicio) {
+                                laborStats[laborId].anterior += sup;
+                            } else if (fechaLabor >= inicio && fechaLabor <= fin) {
+                                laborStats[laborId].semana += sup;
+                                laborStats[laborId].anterior += sup;
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+        const laboresConAvance = Object.entries(laborStats).filter(([id, stats]) => stats.total > 0);
+        const zafraFormatted = zafra.substring(0, 4) + '/' + zafra.substring(4);
+
+        let csv = "data:text/csv;charset=utf-8,";
+        csv += "AVANCE FISICO DE LABORES\n";
+        csv += `ZAFRA: ${zafraFormatted}\n`;
+        csv += `CICLO: ${ciclo === 'SOCAS_RESOCAS' ? 'SOCAS Y RESOCAS' : 'PLANTAS'}\n`;
+        csv += `ZONA: ${zona === 'TODAS' ? 'TODAS' : zona}\n`;
+        csv += `SEMANA DEL ${new Date(fechaInicio).toLocaleDateString('es-MX')} AL ${new Date(fechaFin).toLocaleDateString('es-MX')}\n\n`;
+        csv += "LABOR,Anterior (Ha),Semana (Ha),A la Fecha (Ha)\n";
+
+        laboresConAvance.forEach(([id, stats]) => {
+            const anterior = stats.anterior - stats.semana;
+            csv += `"${stats.nombre}",${anterior.toFixed(2)},${stats.semana.toFixed(2)},${stats.total.toFixed(2)}\n`;
+        });
+
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csv));
+        link.setAttribute("download", `informe_semanal_${zafra}_${zona}_${ciclo}_${fechaInicio}_${fechaFin}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showAlert('Informe exportado exitosamente', 'success');
+    }
+
+    function exportToExcel() {
+        if (userData.length === 0) {
+            showAlert('No hay datos para exportar', 'error');
+            return;
+        }
+
+        let csv = "data:text/csv;charset=utf-8,";
+        csv += "Zafra-Ciclo,Zona,Campo,ID-Prod,Productor,Superficie,Ciclo,Regimen,Fecha-Avance,Observaciones,Usuario,";
+
+        const labNames = ['Desmonte', '1er_Barbecho', '2do_Barbecho', 'Ap_Encalado', '1ra_Rastra', 'Surco',
+            'Siembra_Amp', 'Siembra_Rep', 'Jta_Quema', '1er_Cultivo', '1er_Cultivo_Yta',
+            '1ra_Ap_Fertilizante', '1ra_Ap_Fert_Mec', '1er_Riego', 'Subsuelo_Ctral',
+            '1ra_Limpia', '1ra_Ap_Herbicida', '2da_Ap_Ferti', '2do_Riego',
+            '2da_Limpia', '2da_Ap_Herbicida', 'Resiembra'];
+
+        labNames.forEach(l => csv += `${l}_Realizada,${l}_Fecha,`);
+        csv += "Total_Labores,Timestamp\n";
+
+        userData.forEach(r => {
+            const basic = [
+                r.zafra_ciclo, r.zona, r.campo, r.id_prod,
+                `"${r.nombre_productor}"`, r.superficie, r.ciclo, r.regimen,
+                r.fecha_avance, `"${r.observaciones || ''}"`, r.user
+            ];
+
+            const labs = r.labores || {};
+            const labKeys = ['desmonte', 'primer_barbecho', 'segundo_barbecho', 'ap_encalado', 'primera_rastra',
+                'surco', 'siembra_amp', 'siembra_rep', 'jta_quema', 'primer_cultivo', 'primer_cultivo_yta',
+                'primera_ap_fertilizante', 'primera_ap_fert_mec', 'primer_riego', 'subsuelo_ctral',
+                'primera_limpia', 'primera_ap_herbicida', 'segunda_ap_ferti', 'segundo_riego',
+                'segunda_limpia', 'segunda_ap_herbicida', 'resiembra'];
+
+            let labData = [];
+            let total = 0;
+
+            labKeys.forEach(k => {
+                const li = labs[k];
+                const real = li?.realizada !== undefined ? li.realizada : (li === true);
+                const fecha = li?.fecha || '';
+                labData.push(real ? 1 : 0);
+                labData.push(fecha);
+                if (real) total++;
             });
+
+            const row = [...basic, ...labData, total, r.timestamp].join(',');
+            csv += row + "\n";
         });
 
-        document.getElementById('username').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') document.getElementById('password').focus();
-        });
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csv));
+        link.setAttribute("download", `labores_agricolas_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-        document.getElementById('password').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') handleLogin();
-        });
+        showAlert('Datos exportados exitosamente', 'success');
+    }
 
-        document.getElementById('nombre_productor').addEventListener('input', function(e) {
-            e.target.value = e.target.value.toUpperCase();
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#dataTableBody tr');
+        rows.forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
         });
+    });
 
-        document.getElementById('searchProductor').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') searchProductor();
-        });
+    document.getElementById('username').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') document.getElementById('password').focus();
+    });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('fecha_avance').value = new Date().toISOString().split('T')[0];
-            document.getElementById('fechaInicio').value = new Date().toISOString().split('T')[0];
-            document.getElementById('fechaFin').value = new Date().toISOString().split('T')[0];
-        });
-    </script>
+    document.getElementById('password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') handleLogin();
+    });
+
+    document.getElementById('nombre_productor').addEventListener('input', function(e) {
+        e.target.value = e.target.value.toUpperCase();
+    });
+
+    document.getElementById('searchProductor').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') searchProductor();
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('fecha_avance').value = new Date().toISOString().split('T')[0];
+        document.getElementById('fechaInicio').value = new Date().toISOString().split('T')[0];
+        document.getElementById('fechaFin').value = new Date().toISOString().split('T')[0];
+    });
+</script>
 </body>
 </html>
