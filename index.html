@@ -775,9 +775,11 @@
     function showSection(section) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById(section + 'Section').classList.add('active');
-        if (section === 'reports') updateStats();
-        else if (section === 'data') loadDataTable();
-        else if (section === 'weekly') {
+        if (section === 'reports') {
+            updateStats();
+        } else if (section === 'data') {
+            loadDataTable();
+        } else if (section === 'weekly') {
             populateZonaFilter();
             populateZafraFilter();
         }
@@ -901,11 +903,18 @@
     }
 
     function updateStats() {
+        // userData ya está filtrado por usuario en loadDataFromFirebase
+        // Solo muestra datos del usuario actual (o todos si es admin)
         if (userData.length === 0) {
             document.getElementById('totalSuperficie').textContent = '0';
             document.getElementById('avgLaboresPorProductor').textContent = '0';
             document.getElementById('productoresActivos').textContent = '0';
             document.getElementById('porcentajeAvanceGeneral').textContent = '0%';
+            
+            // Limpiar tablas
+            document.getElementById('laborSuperficieTable').innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">No hay datos para mostrar</p>';
+            document.getElementById('zonaAvanceTable').innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">No hay datos para mostrar</p>';
+            document.getElementById('cicloComparativa').innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">No hay datos para mostrar</p>';
             return;
         }
 
