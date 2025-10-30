@@ -856,24 +856,32 @@
             return;
         }
 
+        // Filtrar productores de la BD
         let filteredProductores = productoresDB.filter(p => {
-            const zafraMatch = p.ZAFRA == zafra;
-            const zonaMatch = p.ZONA == zona;
+            const zafraMatch = p.ZAFRA?.toString() === zafra.toString();
+            const zonaMatch = p.ZONA?.toString() === zona.toString();
             let cicloMatch = ciclo === 'TODOS' || p.CICLO === ciclo;
             return zafraMatch && zonaMatch && cicloMatch;
         });
 
+        // Cruzar con userData para ver quién NO ha hecho la labor
         const productoresPendientes = filteredProductores.filter(productor => {
             const registro = userData.find(r => 
-                r.campo === productor.CAMPO && 
-                r.zona == productor.ZONA &&
-                r.zafra_ciclo == productor.ZAFRA
+                r.campo?.toString().toUpperCase() === productor.CAMPO?.toString().toUpperCase() && 
+                r.zona?.toString() === productor.ZONA?.toString() &&
+                r.zafra_ciclo?.toString() === productor.ZAFRA?.toString()
             );
 
-            if (!registro) return true;
+            if (!registro) {
+                // No tiene registro, está pendiente
+                return true;
+            }
             
+            // Verificar si ya realizó esta labor específica
             const laborData = registro.labores?.[laborId];
             const realizada = laborData?.realizada || laborData === true;
+            
+            // Solo incluir si NO ha realizado la labor
             return !realizada;
         });
 
@@ -886,7 +894,12 @@
         renderLaborTable();
         updateLaborStats();
         document.getElementById('laborResultsContainer').classList.remove('hidden');
-        showLaborAlert(`${productoresPendientes.length} productores pendientes encontrados`, 'success');
+        
+        if (productoresPendientes.length === 0) {
+            showLaborAlert('No hay productores pendientes para esta labor en los filtros seleccionados', 'info');
+        } else {
+            showLaborAlert(`${productoresPendientes.length} productores pendientes encontrados`, 'success');
+        }
     }
 
     function renderLaborTable() {
@@ -982,13 +995,15 @@
             let creados = 0;
 
             for (const prod of selected) {
+                // Buscar registro existente con múltiples criterios
                 const registro = userData.find(r => 
-                    r.campo === prod.CAMPO && 
-                    r.zona == prod.ZONA &&
-                    r.zafra_ciclo == prod.ZAFRA
+                    r.campo?.toString().toUpperCase() === prod.CAMPO?.toString().toUpperCase() && 
+                    r.zona?.toString() === prod.ZONA?.toString() &&
+                    r.zafra_ciclo?.toString() === prod.ZAFRA?.toString()
                 );
 
                 if (registro) {
+                    // ACTUALIZAR registro existente
                     const laboresActualizadas = { ...registro.labores };
                     laboresActualizadas[laborId] = {
                         realizada: true,
@@ -1000,16 +1015,19 @@
                         timestamp: new Date().toISOString()
                     });
                     actualizados++;
+                    
+                    console.log(`✓ Actualizado: ${prod.CAMPO} - ${prod.PRODUCTOR}`);
                 } else {
+                    // CREAR nuevo registro solo si NO existe
                     const nuevoRegistro = {
-                        zafra_ciclo: prod.ZAFRA,
-                        zona: prod.ZONA,
-                        campo: prod.CAMPO,
-                        id_prod: prod.ID_PRODUCTOR,
-                        nombre_productor: prod.PRODUCTOR,
-                        superficie: prod.SUPERFICIE,
-                        ciclo: prod.CICLO,
-                        regimen: prod.REGIMEN || 'TEMPORAL',
+                        zafra_ciclo: prod.ZAFRA?.toString(),
+                        zona: prod.ZONA?.toString(),
+                        campo: prod.CAMPO?.toString(),
+                        id_prod: prod.ID_PRODUCTOR?.toString(),
+                        nombre_productor: prod.PRODUCTOR?.toString(),
+                        superficie: parseFloat(prod.SUPERFICIE) || 0,
+                        ciclo: prod.CICLO?.toString(),
+                        regimen: prod.REGIMEN?.toString() || 'TEMPORAL',
                         fecha_avance: prod.fecha,
                         observaciones: `Capturado por labor: ${laboresList.find(l => l.id === laborId)?.name}`,
                         timestamp: new Date().toISOString(),
@@ -1017,6 +1035,7 @@
                         labores: {}
                     };
 
+                    // Inicializar todas las labores en false
                     laboresList.forEach(labor => {
                         nuevoRegistro.labores[labor.id] = {
                             realizada: labor.id === laborId,
@@ -1026,16 +1045,22 @@
 
                     await addDoc(collection(db, 'labores_agricolas'), nuevoRegistro);
                     creados++;
+                    
+                    console.log(`✓ Creado: ${prod.CAMPO} - ${prod.PRODUCTOR}`);
                 }
             }
 
+            // Recargar datos
             await loadDataFromFirebase();
-            showLaborAlert(`✓ ${actualizados} registros actualizados, ${creados} registros creados`, 'success');
+            
+            showLaborAlert(`✓ Guardado exitoso: ${actualizados} actualizados, ${creados} creados`, 'success');
             clearLaborSelection();
+            
+            // Refrescar la búsqueda para ver los cambios
             searchProductoresByLabor();
         } catch (error) {
-            console.error('Error:', error);
-            showLaborAlert('Error al guardar las capturas', 'error');
+            console.error('Error al guardar:', error);
+            showLaborAlert('Error al guardar las capturas: ' + error.message, 'error');
         }
     }
 
