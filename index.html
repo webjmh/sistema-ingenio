@@ -336,9 +336,8 @@
                     <select id="zafra_ciclo" required>
                         <option value="">Seleccione</option>
                         <option value="20252026">20252026</option>
-                        <option value="20252027">20252027</option>
                         <option value="20262027">20262027</option>
-                        <option value="20262028">20262028</option>
+                        <option value="20272028">20272028</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -627,6 +626,7 @@
 
     const laboresList = [
         {id: 'desmonte', name: 'Desmonte'},
+        {id: 'destronconche', name: 'Destronconche'},
         {id: 'primer_barbecho', name: '1er. Barbecho'},
         {id: 'segundo_barbecho', name: '2do. Barbecho'},
         {id: 'ap_encalado', name: 'Ap./Encalado'},
@@ -645,9 +645,14 @@
         {id: 'primera_ap_herbicida', name: '1ra. Ap/Herbicida'},
         {id: 'segunda_ap_ferti', name: '2da. Ap/Ferti.'},
         {id: 'segundo_riego', name: '2do. Riego'},
+        {id: 'ahile_tlazole', name: 'Ahile de Tlazole'},
         {id: 'segunda_limpia', name: '2da. Limpia'},
         {id: 'segunda_ap_herbicida', name: '2da. Ap/Herbicida'},
-        {id: 'resiembra', name: 'Resiembra'}
+        {id: 'tercer_riego', name: '3er. Riego'},
+        {id: 'cuarto_riego', name: '4o. Riego'},
+        {id: 'resiembra', name: 'Resiembra'},
+        {id: 'volteo', name: 'Volteo'},
+        {id: 'baja', name: 'Baja', noDate: true}
     ];
 
     function initLabores() {
@@ -660,9 +665,11 @@
                         <span class="labor-text">${labor.name}</span>
                     </label>
                 </div>
+                ${!labor.noDate ? `
                 <div class="labor-date-container">
                     <input type="date" id="${labor.id}_fecha" class="labor-date-input" disabled>
                 </div>
+                ` : ''}
             </div>
         `).join('');
     }
@@ -1201,11 +1208,21 @@
         const laboresData = {};
         laboresList.forEach(labor => {
             const cb = document.getElementById(labor.id);
-            const dt = document.getElementById(labor.id + '_fecha');
-            laboresData[labor.id] = {
-                realizada: cb.checked,
-                fecha: cb.checked && dt.value ? dt.value : null
-            };
+            
+            if (labor.noDate) {
+                // Para labores sin fecha (como BAJA)
+                laboresData[labor.id] = {
+                    realizada: cb ? cb.checked : false,
+                    fecha: null
+                };
+            } else {
+                // Para labores con fecha
+                const dt = document.getElementById(labor.id + '_fecha');
+                laboresData[labor.id] = {
+                    realizada: cb ? cb.checked : false,
+                    fecha: (cb && cb.checked && dt && dt.value) ? dt.value : null
+                };
+            }
         });
 
         const formData = {
@@ -1241,15 +1258,18 @@
             return;
         }
 
+        // Validar fechas solo para labores que requieren fecha
         let invalidLabores = [];
         laboresList.forEach(labor => {
-            const cb = document.getElementById(labor.id);
-            const dt = document.getElementById(labor.id + '_fecha');
-            if (cb.checked && !dt.value) {
-                invalidLabores.push(labor.id);
-                dt.style.borderColor = '#dc3545';
-            } else {
-                dt.style.borderColor = '#e0e0e0';
+            if (!labor.noDate) {
+                const cb = document.getElementById(labor.id);
+                const dt = document.getElementById(labor.id + '_fecha');
+                if (cb && cb.checked && dt && !dt.value) {
+                    invalidLabores.push(labor.id);
+                    dt.style.borderColor = '#dc3545';
+                } else if (dt) {
+                    dt.style.borderColor = '#e0e0e0';
+                }
             }
         });
 
@@ -1286,12 +1306,15 @@
         });
         laboresList.forEach(labor => {
             const cb = document.getElementById(labor.id);
-            const dt = document.getElementById(labor.id + '_fecha');
             if (cb) cb.checked = false;
-            if (dt) {
-                dt.value = '';
-                dt.disabled = true;
-                dt.style.borderColor = '#e0e0e0';
+            
+            if (!labor.noDate) {
+                const dt = document.getElementById(labor.id + '_fecha');
+                if (dt) {
+                    dt.value = '';
+                    dt.disabled = true;
+                    dt.style.borderColor = '#e0e0e0';
+                }
             }
         });
         editingDocId = null;
@@ -1338,7 +1361,7 @@
         });
 
         const avgLab = (totalLab / userData.length).toFixed(1);
-        const pctAvance = ((totalLab / (userData.length * 22)) * 100).toFixed(1);
+        const pctAvance = ((totalLab / (userData.length * 28)) * 100).toFixed(1);
 
         document.getElementById('totalSuperficie').textContent = totalSup.toFixed(1);
         document.getElementById('avgLaboresPorProductor').textContent = avgLab;
@@ -1352,15 +1375,16 @@
 
     function generateLaborReport() {
         const laborNames = {
-            desmonte: 'Desmonte', primer_barbecho: '1er. Barbecho', segundo_barbecho: '2do. Barbecho',
+            desmonte: 'Desmonte', destronconche: 'Destronconche', primer_barbecho: '1er. Barbecho', segundo_barbecho: '2do. Barbecho',
             ap_encalado: 'Ap./Encalado', primera_rastra: '1ra. Rastra', surco: 'Surco',
             siembra_amp: 'Siembra-Amp.', siembra_rep: 'Siembra-Rep.', jta_quema: 'Jta. Quema',
             primer_cultivo: '1er. Cultivo', primer_cultivo_yta: '1er. Cultivo/Yta.',
             primera_ap_fertilizante: '1ra. Ap/Fertilizante', primera_ap_fert_mec: '1ra. Ap/Fert.Mec.',
             primer_riego: '1er. Riego', subsuelo_ctral: 'Subsuelo/Ctral.', primera_limpia: '1ra. Limpia',
             primera_ap_herbicida: '1ra. Ap/Herbicida', segunda_ap_ferti: '2da. Ap/Ferti.',
-            segundo_riego: '2do. Riego', segunda_limpia: '2da. Limpia',
-            segunda_ap_herbicida: '2da. Ap/Herbicida', resiembra: 'Resiembra'
+            segundo_riego: '2do. Riego', ahile_tlazole: 'Ahile de Tlazole', segunda_limpia: '2da. Limpia',
+            segunda_ap_herbicida: '2da. Ap/Herbicida', tercer_riego: '3er. Riego', cuarto_riego: '4o. Riego',
+            resiembra: 'Resiembra', volteo: 'Volteo', baja: 'Baja'
         };
 
         const stats = {};
@@ -1413,8 +1437,8 @@
         Object.keys(zonaStats).sort().forEach(z => {
             const s = zonaStats[z];
             const avg = (s.lab / s.prod).toFixed(1);
-            const pct = ((s.lab / (s.prod * 22)) * 100).toFixed(1);
-            html += `<tr><td><strong>Zona ${z}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/22</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
+            const pct = ((s.lab / (s.prod * 28)) * 100).toFixed(1);
+            html += `<tr><td><strong>Zona ${z}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/28</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
         });
 
         html += '</tbody></table>';
@@ -1444,8 +1468,8 @@
             const s = cicloStats[c];
             if (s.prod > 0) {
                 const avg = (s.lab / s.prod).toFixed(1);
-                const pct = ((s.lab / (s.prod * 22)) * 100).toFixed(1);
-                html += `<tr><td><strong>${c}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/22</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
+                const pct = ((s.lab / (s.prod * 28)) * 100).toFixed(1);
+                html += `<tr><td><strong>${c}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/28</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
             }
         });
 
@@ -1970,11 +1994,11 @@
         let csv = "data:text/csv;charset=utf-8,";
         csv += "Zafra-Ciclo,Zona,Campo,ID-Prod,Productor,Superficie,Ciclo,Regimen,Fecha-Avance,Observaciones,Usuario,";
 
-        const labNames = ['Desmonte', '1er_Barbecho', '2do_Barbecho', 'Ap_Encalado', '1ra_Rastra', 'Surco',
+        const labNames = ['Desmonte', 'Destronconche', '1er_Barbecho', '2do_Barbecho', 'Ap_Encalado', '1ra_Rastra', 'Surco',
             'Siembra_Amp', 'Siembra_Rep', 'Jta_Quema', '1er_Cultivo', '1er_Cultivo_Yta',
             '1ra_Ap_Fertilizante', '1ra_Ap_Fert_Mec', '1er_Riego', 'Subsuelo_Ctral',
-            '1ra_Limpia', '1ra_Ap_Herbicida', '2da_Ap_Ferti', '2do_Riego',
-            '2da_Limpia', '2da_Ap_Herbicida', 'Resiembra'];
+            '1ra_Limpia', '1ra_Ap_Herbicida', '2da_Ap_Ferti', '2do_Riego', 'Ahile_de_Tlazole',
+            '2da_Limpia', '2da_Ap_Herbicida', '3er_Riego', '4o_Riego', 'Resiembra', 'Volteo', 'Baja'];
 
         labNames.forEach(l => csv += `${l}_Realizada,${l}_Fecha,`);
         csv += "Total_Labores,Timestamp\n";
@@ -1987,11 +2011,11 @@
             ];
 
             const labs = r.labores || {};
-            const labKeys = ['desmonte', 'primer_barbecho', 'segundo_barbecho', 'ap_encalado', 'primera_rastra',
+            const labKeys = ['desmonte', 'destronconche', 'primer_barbecho', 'segundo_barbecho', 'ap_encalado', 'primera_rastra',
                 'surco', 'siembra_amp', 'siembra_rep', 'jta_quema', 'primer_cultivo', 'primer_cultivo_yta',
                 'primera_ap_fertilizante', 'primera_ap_fert_mec', 'primer_riego', 'subsuelo_ctral',
-                'primera_limpia', 'primera_ap_herbicida', 'segunda_ap_ferti', 'segundo_riego',
-                'segunda_limpia', 'segunda_ap_herbicida', 'resiembra'];
+                'primera_limpia', 'primera_ap_herbicida', 'segunda_ap_ferti', 'segundo_riego', 'ahile_tlazole',
+                'segunda_limpia', 'segunda_ap_herbicida', 'tercer_riego', 'cuarto_riego', 'resiembra', 'volteo', 'baja'];
 
             let labData = [];
             let total = 0;
