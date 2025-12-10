@@ -336,7 +336,6 @@
                     <select id="zafra_ciclo" required>
                         <option value="">Seleccione</option>
                         <option value="20252026">20252026</option>
-                        <option value="20252027">20252027</option>
                         <option value="20262027">20262027</option>
                         <option value="20272028">20272028</option>
                     </select>
@@ -367,12 +366,7 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="ciclo">Ciclo *</label>
-                    <select id="ciclo" required>
-                        <option value="">Seleccione</option>
-                        <option value="PLANTA">PLANTA</option>
-                        <option value="SOCA">SOCA</option>
-                        <option value="RESOCA">RESOCA</option>
-                    </select>
+                    <input type="text" id="ciclo" required placeholder="Ej: PLANTA, SOCA, RESOCA 1, RESOCA 2..." style="text-transform: uppercase;">
                 </div>
                 <div class="form-group">
                     <label for="regimen">Régimen *</label>
@@ -435,7 +429,7 @@
                         <option value="TODOS">TODOS</option>
                         <option value="PLANTA">PLANTA</option>
                         <option value="SOCA">SOCA</option>
-                        <option value="RESOCA">RESOCA</option>
+                        <option value="RESOCAS">RESOCAS</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -510,10 +504,7 @@
             <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🗺️ Avance por Zona</h3>
             <div id="zonaAvanceTable"></div>
         </div>
-        <div style="background: white; padding: 20px; border-radius: 10px;">
-            <h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🌱 Por Ciclo</h3>
-            <div id="cicloComparativa"></div>
-        </div>
+        <div id="cicloComparativa"></div>
     </div>
 
     <!-- INFORME SEMANAL -->
@@ -625,7 +616,7 @@
 
     const laboresList = [
         {id: 'desmonte', name: 'Desmonte'},
-        {id: 'destroncone', name: 'Destroncone'},
+        {id: 'destronconche', name: 'Destroncone'},
         {id: 'primer_barbecho', name: '1er. Barbecho'},
         {id: 'segundo_barbecho', name: '2do. Barbecho'},
         {id: 'ap_encalado', name: 'Ap./Encalado'},
@@ -694,7 +685,6 @@
         }
     }
 
-    // Exportar funciones
     window.toggleLaborDate = toggleLaborDate;
     window.handleLogin = handleLogin;
     window.logout = logout;
@@ -850,7 +840,6 @@
         });
     }
 
-    // FUNCIONES CAPTURA POR LABOR
     function searchProductoresByLabor() {
         const zafra = document.getElementById('laborZafra').value;
         const zona = document.getElementById('laborZona').value;
@@ -862,15 +851,23 @@
             return;
         }
 
-        // Filtrar productores de la BD
         let filteredProductores = productoresDB.filter(p => {
             const zafraMatch = p.ZAFRA?.toString() === zafra.toString();
             const zonaMatch = p.ZONA?.toString() === zona.toString();
-            let cicloMatch = ciclo === 'TODOS' || p.CICLO === ciclo;
+            let cicloMatch = false;
+            
+            // CAMBIO 1: Filtro RESOCAS busca todos los que contengan "RESOCA"
+            if (ciclo === 'TODOS') {
+                cicloMatch = true;
+            } else if (ciclo === 'RESOCAS') {
+                cicloMatch = p.CICLO?.toUpperCase().includes('RESOCA');
+            } else {
+                cicloMatch = p.CICLO?.toUpperCase() === ciclo;
+            }
+            
             return zafraMatch && zonaMatch && cicloMatch;
         });
 
-        // Cruzar con userData para ver quién NO ha hecho la labor
         const productoresPendientes = filteredProductores.filter(productor => {
             const registro = userData.find(r => 
                 r.campo?.toString().toUpperCase() === productor.CAMPO?.toString().toUpperCase() && 
@@ -878,16 +875,11 @@
                 r.zafra_ciclo?.toString() === productor.ZAFRA?.toString()
             );
 
-            if (!registro) {
-                // No tiene registro, está pendiente
-                return true;
-            }
+            if (!registro) return true;
             
-            // Verificar si ya realizó esta labor específica
             const laborData = registro.labores?.[laborId];
             const realizada = laborData?.realizada || laborData === true;
             
-            // Solo incluir si NO ha realizado la labor
             return !realizada;
         });
 
@@ -1001,7 +993,6 @@
             let creados = 0;
 
             for (const prod of selected) {
-                // Buscar registro existente con múltiples criterios
                 const registro = userData.find(r => 
                     r.campo?.toString().toUpperCase() === prod.CAMPO?.toString().toUpperCase() && 
                     r.zona?.toString() === prod.ZONA?.toString() &&
@@ -1009,7 +1000,6 @@
                 );
 
                 if (registro) {
-                    // ACTUALIZAR registro existente
                     const laboresActualizadas = { ...registro.labores };
                     laboresActualizadas[laborId] = {
                         realizada: true,
@@ -1024,28 +1014,26 @@
                     
                     console.log(`✓ Actualizado: ${prod.CAMPO} - ${prod.PRODUCTOR}`);
                 } else {
-                    // CREAR nuevo registro solo si NO existe
                     const nuevoRegistro = {
-                        zafra_ciclo: prod.ZAFRA?.toString(),
-                        zona: prod.ZONA?.toString(),
-                        campo: prod.CAMPO?.toString(),
-                        id_prod: prod.ID_PRODUCTOR?.toString(),
-                        nombre_productor: prod.PRODUCTOR?.toString(),
+                        zafra_ciclo: prod.ZAFRA?.toString() || '',
+                        zona: prod.ZONA?.toString() || '',
+                        campo: prod.CAMPO?.toString() || '',
+                        id_prod: prod.ID_PRODUCTOR?.toString() || '',
+                        nombre_productor: prod.PRODUCTOR?.toString() || '',
                         superficie: parseFloat(prod.SUPERFICIE) || 0,
-                        ciclo: prod.CICLO?.toString(),
+                        ciclo: prod.CICLO?.toString() || '',
                         regimen: prod.REGIMEN?.toString() || 'TEMPORAL',
-                        fecha_avance: prod.fecha,
-                        observaciones: `Capturado por labor: ${laboresList.find(l => l.id === laborId)?.name}`,
+                        fecha_avance: prod.fecha || new Date().toISOString().split('T')[0],
+                        observaciones: `Capturado por labor: ${laboresList.find(l => l.id === laborId)?.name || laborId}`,
                         timestamp: new Date().toISOString(),
                         user: currentUser,
                         labores: {}
                     };
 
-                    // Inicializar todas las labores en false
                     laboresList.forEach(labor => {
                         nuevoRegistro.labores[labor.id] = {
                             realizada: labor.id === laborId,
-                            fecha: labor.id === laborId ? prod.fecha : null
+                            fecha: labor.id === laborId ? (prod.fecha || new Date().toISOString().split('T')[0]) : null
                         };
                     });
 
@@ -1056,13 +1044,11 @@
                 }
             }
 
-            // Recargar datos
             await loadDataFromFirebase();
             
             showLaborAlert(`✓ Guardado exitoso: ${actualizados} actualizados, ${creados} creados`, 'success');
             clearLaborSelection();
             
-            // Refrescar la búsqueda para ver los cambios
             searchProductoresByLabor();
         } catch (error) {
             console.error('Error al guardar:', error);
@@ -1094,9 +1080,6 @@
         setTimeout(() => alert.style.display = 'none', 4000);
     }
 
-    // Continúo en el siguiente mensaje debido al límite de caracteres...
-
-    // FUNCIONES CAPTURA POR PRODUCTOR
     function searchProductor() {
         const searchTerm = document.getElementById('searchProductor').value.trim().toUpperCase();
         if (!searchTerm) {
@@ -1134,7 +1117,7 @@
         document.getElementById('id_prod').value = productor.ID_PRODUCTOR || '';
         document.getElementById('nombre_productor').value = productor.PRODUCTOR || '';
         document.getElementById('superficie').value = productor.SUPERFICIE || '';
-        document.getElementById('ciclo').value = productor.CICLO || '';
+        document.getElementById('ciclo').value = (productor.CICLO || '').toUpperCase();
         document.getElementById('regimen').value = productor.REGIMEN || '';
         
         document.getElementById('searchResults').classList.add('hidden');
@@ -1209,13 +1192,11 @@
             const cb = document.getElementById(labor.id);
             
             if (labor.noDate) {
-                // Para labores sin fecha (como BAJA)
                 laboresData[labor.id] = {
                     realizada: cb ? cb.checked : false,
                     fecha: null
                 };
             } else {
-                // Para labores con fecha
                 const dt = document.getElementById(labor.id + '_fecha');
                 laboresData[labor.id] = {
                     realizada: cb ? cb.checked : false,
@@ -1257,7 +1238,6 @@
             return;
         }
 
-        // Validar fechas solo para labores que requieren fecha
         let invalidLabores = [];
         laboresList.forEach(labor => {
             if (!labor.noDate) {
@@ -1284,14 +1264,42 @@
                 editingDocId = null;
                 document.getElementById('cancelEdit').classList.add('hidden');
             } else {
-                await addDoc(collection(db, 'labores_agricolas'), formData);
-                showAlert('Registro guardado', 'success');
+                const registroExistente = userData.find(r => 
+                    r.campo?.toString().toUpperCase() === formData.campo?.toString().toUpperCase() && 
+                    r.zona?.toString() === formData.zona?.toString() &&
+                    r.zafra_ciclo?.toString() === formData.zafra_ciclo?.toString()
+                );
+
+                if (registroExistente) {
+                    const laboresActualizadas = { ...registroExistente.labores };
+                    
+                    Object.keys(formData.labores).forEach(laborId => {
+                        const laborNueva = formData.labores[laborId];
+                        if (laborNueva.realizada) {
+                            laboresActualizadas[laborId] = laborNueva;
+                        }
+                    });
+
+                    await updateDoc(doc(db, 'labores_agricolas', registroExistente.id), {
+                        ...formData,
+                        labores: laboresActualizadas,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    showAlert('✓ Registro actualizado con las nuevas labores', 'success');
+                    console.log(`✓ Actualizado: ${formData.campo} - ${formData.nombre_productor}`);
+                } else {
+                    await addDoc(collection(db, 'labores_agricolas'), formData);
+                    showAlert('✓ Nuevo registro guardado', 'success');
+                    console.log(`✓ Creado: ${formData.campo} - ${formData.nombre_productor}`);
+                }
             }
+            
             await loadDataFromFirebase();
             clearForm();
         } catch (error) {
             console.error('Error:', error);
-            showAlert('Error al guardar', 'error');
+            showAlert('Error al guardar: ' + error.message, 'error');
         }
     }
 
@@ -1374,7 +1382,7 @@
 
     function generateLaborReport() {
         const laborNames = {
-            desmonte: 'Desmonte', destroncone: 'Destroncone', primer_barbecho: '1er. Barbecho', segundo_barbecho: '2do. Barbecho',
+            desmonte: 'Desmonte', destronconche: 'Destroncone', primer_barbecho: '1er. Barbecho', segundo_barbecho: '2do. Barbecho',
             ap_encalado: 'Ap./Encalado', primera_rastra: '1ra. Rastra', surco: 'Surco',
             siembra_amp: 'Siembra-Amp.', siembra_rep: 'Siembra-Rep.', jta_quema: 'Jta. Quema',
             primer_cultivo: '1er. Cultivo', primer_cultivo_yta: '1er. Cultivo/Yta.',
@@ -1445,35 +1453,156 @@
     }
 
     function generateCicloReport() {
-        const cicloStats = { PLANTA: { sup: 0, prod: 0, lab: 0 }, SOCA: { sup: 0, prod: 0, lab: 0 }, RESOCA: { sup: 0, prod: 0, lab: 0 } };
+        // CAMBIO 2: Título y orden específico
+        const cicloDetallado = {
+            PLANTA: { sup: 0, prod: 0, lab: 0 },
+            SOCA: { sup: 0, prod: 0, lab: 0 },
+            'RESOCA 1': { sup: 0, prod: 0, lab: 0 },
+            'RESOCA 2': { sup: 0, prod: 0, lab: 0 },
+            'RESOCA 3': { sup: 0, prod: 0, lab: 0 },
+            'RESOCA >3': { sup: 0, prod: 0, lab: 0 }
+        };
+
+        const cicloAgrupado = {
+            PLANTA: { sup: 0, prod: 0, lab: 0 },
+            SOCA: { sup: 0, prod: 0, lab: 0 },
+            RESOCAS: { sup: 0, prod: 0, lab: 0 }
+        };
+
+        const porVariedad = {};
 
         userData.forEach(r => {
-            const c = r.ciclo;
+            const ciclo = r.ciclo?.toUpperCase() || '';
             const sup = parseFloat(r.superficie || 0);
-            if (cicloStats[c]) {
-                cicloStats[c].sup += sup;
-                cicloStats[c].prod += 1;
-                if (r.labores) {
-                    Object.values(r.labores).forEach(l => {
-                        if (l.realizada || l === true) cicloStats[c].lab++;
-                    });
-                }
+            
+            const productor = productoresDB.find(p => 
+                p.CAMPO?.toString().toUpperCase() === r.campo?.toString().toUpperCase() && 
+                p.ZONA?.toString() === r.zona?.toString() &&
+                p.ZAFRA?.toString() === r.zafra_ciclo?.toString()
+            );
+            const variedad = productor?.VARIEDAD?.toUpperCase() || 'SIN VARIEDAD';
+            
+            let labores = 0;
+            if (r.labores) {
+                Object.values(r.labores).forEach(l => {
+                    if (l.realizada || l === true) labores++;
+                });
+            }
+
+            if (ciclo === 'PLANTA') {
+                cicloDetallado.PLANTA.sup += sup;
+                cicloDetallado.PLANTA.prod += 1;
+                cicloDetallado.PLANTA.lab += labores;
+            } else if (ciclo === 'SOCA') {
+                cicloDetallado.SOCA.sup += sup;
+                cicloDetallado.SOCA.prod += 1;
+                cicloDetallado.SOCA.lab += labores;
+            } else if (ciclo === 'RESOCA 1') {
+                cicloDetallado['RESOCA 1'].sup += sup;
+                cicloDetallado['RESOCA 1'].prod += 1;
+                cicloDetallado['RESOCA 1'].lab += labores;
+            } else if (ciclo === 'RESOCA 2') {
+                cicloDetallado['RESOCA 2'].sup += sup;
+                cicloDetallado['RESOCA 2'].prod += 1;
+                cicloDetallado['RESOCA 2'].lab += labores;
+            } else if (ciclo === 'RESOCA 3') {
+                cicloDetallado['RESOCA 3'].sup += sup;
+                cicloDetallado['RESOCA 3'].prod += 1;
+                cicloDetallado['RESOCA 3'].lab += labores;
+            } else if (ciclo.includes('RESOCA')) {
+                cicloDetallado['RESOCA >3'].sup += sup;
+                cicloDetallado['RESOCA >3'].prod += 1;
+                cicloDetallado['RESOCA >3'].lab += labores;
+            }
+
+            if (ciclo === 'PLANTA') {
+                cicloAgrupado.PLANTA.sup += sup;
+                cicloAgrupado.PLANTA.prod += 1;
+                cicloAgrupado.PLANTA.lab += labores;
+            } else if (ciclo === 'SOCA') {
+                cicloAgrupado.SOCA.sup += sup;
+                cicloAgrupado.SOCA.prod += 1;
+                cicloAgrupado.SOCA.lab += labores;
+            } else if (ciclo.includes('RESOCA')) {
+                cicloAgrupado.RESOCAS.sup += sup;
+                cicloAgrupado.RESOCAS.prod += 1;
+                cicloAgrupado.RESOCAS.lab += labores;
+            }
+
+            if (!porVariedad[variedad]) {
+                porVariedad[variedad] = {
+                    PLANTA: 0,
+                    SOCA: 0,
+                    RESOCAS: 0
+                };
+            }
+
+            if (ciclo === 'PLANTA') {
+                porVariedad[variedad].PLANTA += sup;
+            } else if (ciclo === 'SOCA') {
+                porVariedad[variedad].SOCA += sup;
+            } else if (ciclo.includes('RESOCA')) {
+                porVariedad[variedad].RESOCAS += sup;
             }
         });
 
-        let html = '<table class="data-table"><thead><tr><th>Ciclo</th><th>Superficie (Ha)</th><th>Productores</th><th>Labores Prom.</th><th>% Avance</th></tr></thead><tbody>';
+        let html1 = '<div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">';
+        html1 += '<h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🌱 Resumen Detallado por Ciclo</h3>';
+        html1 += '<table class="data-table"><thead><tr><th>Ciclo</th><th>Superficie (Ha)</th><th>Productores</th><th>Labores Prom.</th><th>% Avance</th></tr></thead><tbody>';
 
-        Object.keys(cicloStats).forEach(c => {
-            const s = cicloStats[c];
+        const ordenDetallado = ['PLANTA', 'SOCA', 'RESOCA 1', 'RESOCA 2', 'RESOCA 3', 'RESOCA >3'];
+        ordenDetallado.forEach(c => {
+            const s = cicloDetallado[c];
             if (s.prod > 0) {
                 const avg = (s.lab / s.prod).toFixed(1);
                 const pct = ((s.lab / (s.prod * 28)) * 100).toFixed(1);
-                html += `<tr><td><strong>${c}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/28</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
+                html1 += `<tr><td><strong>${c}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/28</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
+            }
+        });
+        html1 += '</tbody></table></div>';
+
+        let html2 = '<div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">';
+        html2 += '<h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🌱 Resumen Agrupado</h3>';
+        html2 += '<table class="data-table"><thead><tr><th>Ciclo</th><th>Superficie (Ha)</th><th>Productores</th><th>Labores Prom.</th><th>% Avance</th></tr></thead><tbody>';
+
+        Object.keys(cicloAgrupado).forEach(c => {
+            const s = cicloAgrupado[c];
+            if (s.prod > 0) {
+                const avg = (s.lab / s.prod).toFixed(1);
+                const pct = ((s.lab / (s.prod * 28)) * 100).toFixed(1);
+                html2 += `<tr><td><strong>${c}</strong></td><td>${s.sup.toFixed(2)}</td><td>${s.prod}</td><td>${avg}/28</td><td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td></tr>`;
+            }
+        });
+        html2 += '</tbody></table></div>';
+
+        let html3 = '<div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">';
+        html3 += '<h3 style="color: rgb(34,116,71); margin-bottom: 15px;">🌾 Por Variedad</h3>';
+        html3 += '<table class="data-table"><thead><tr><th>Variedad</th><th>Planta (Ha)</th><th>Soca (Ha)</th><th>Resocas (Ha)</th><th>Total (Ha)</th><th>%</th></tr></thead><tbody>';
+
+        const totalGeneral = Object.values(porVariedad).reduce((sum, v) => 
+            sum + v.PLANTA + v.SOCA + v.RESOCAS, 0
+        );
+
+        Object.keys(porVariedad).sort().forEach(variedad => {
+            const v = porVariedad[variedad];
+            const total = v.PLANTA + v.SOCA + v.RESOCAS;
+            const pct = totalGeneral > 0 ? ((total / totalGeneral) * 100).toFixed(1) : 0;
+            
+            if (total > 0) {
+                html3 += `<tr>
+                    <td><strong>${variedad}</strong></td>
+                    <td>${v.PLANTA.toFixed(2)}</td>
+                    <td>${v.SOCA.toFixed(2)}</td>
+                    <td>${v.RESOCAS.toFixed(2)}</td>
+                    <td><strong>${total.toFixed(2)}</strong></td>
+                    <td><div style="display: flex; align-items: center; gap: 10px;"><div style="background: #e0e0e0; height: 8px; width: 100px; border-radius: 4px; overflow: hidden;"><div style="background: rgb(34,116,71); height: 100%; width: ${pct}%;"></div></div><span>${pct}%</span></div></td>
+                </tr>`;
             }
         });
 
-        html += '</tbody></table>';
-        document.getElementById('cicloComparativa').innerHTML = html;
+        html3 += '</tbody></table></div>';
+
+        document.getElementById('cicloComparativa').innerHTML = html1 + html2 + html3;
     }
 
     function loadDataTable() {
@@ -1591,8 +1720,6 @@
         }
     }
 
-    // Continúo con generateWeeklyReport en el siguiente mensaje...
-
     function generateWeeklyReport() {
         const zafra = document.getElementById('filterZafra').value;
         const zona = document.getElementById('filterZona').value;
@@ -1610,35 +1737,33 @@
             return;
         }
 
+        // CAMBIO 3: Filtro SOCAS_RESOCAS agrupa todas las resocas con número
         const filteredData = userData.filter(r => {
             const zafraMatch = r.zafra_ciclo === zafra;
             const zonaMatch = zona === 'TODAS' || r.zona == zona;
             let cicloMatch = false;
             if (ciclo === 'SOCAS_RESOCAS') {
-                cicloMatch = r.ciclo === 'SOCA' || r.ciclo === 'RESOCA';
+                cicloMatch = r.ciclo?.toUpperCase() === 'SOCA' || r.ciclo?.toUpperCase().includes('RESOCA');
             } else if (ciclo === 'PLANTA') {
-                cicloMatch = r.ciclo === 'PLANTA';
+                cicloMatch = r.ciclo?.toUpperCase() === 'PLANTA';
             }
             return zafraMatch && zonaMatch && cicloMatch;
         });
 
-        const laborStats = {};
+        // CAMBIO 4: Nueva estructura con columna ZONA
+        const laborStatsByZona = {};
         const cicloStats = { PLANTA: 0, SOCA: 0, RESOCA: 0 };
         
-        laboresList.forEach(labor => {
-            laborStats[labor.id] = {
-                nombre: labor.name,
-                anterior: 0,
-                semana: 0,
-                total: 0
-            };
-        });
-
         filteredData.forEach(r => {
             const sup = parseFloat(r.superficie || 0);
+            const zonaRegistro = r.zona || 'Sin Zona';
             
-            if (cicloStats[r.ciclo] !== undefined) {
-                cicloStats[r.ciclo] += sup;
+            if (r.ciclo?.toUpperCase() === 'PLANTA') {
+                cicloStats.PLANTA += sup;
+            } else if (r.ciclo?.toUpperCase() === 'SOCA') {
+                cicloStats.SOCA += sup;
+            } else if (r.ciclo?.toUpperCase().includes('RESOCA')) {
+                cicloStats.RESOCA += sup;
             }
             
             if (r.labores) {
@@ -1651,22 +1776,37 @@
                         const inicio = new Date(fechaInicio);
                         const fin = new Date(fechaFin);
 
-                        if (laborStats[laborId]) {
-                            laborStats[laborId].total += sup;
+                        const key = `${zonaRegistro}_${laborId}`;
+                        if (!laborStatsByZona[key]) {
+                            laborStatsByZona[key] = {
+                                zona: zonaRegistro,
+                                laborId: laborId,
+                                nombre: laboresList.find(l => l.id === laborId)?.name || laborId,
+                                anterior: 0,
+                                semana: 0,
+                                total: 0
+                            };
+                        }
 
-                            if (fechaLabor < inicio) {
-                                laborStats[laborId].anterior += sup;
-                            } else if (fechaLabor >= inicio && fechaLabor <= fin) {
-                                laborStats[laborId].semana += sup;
-                                laborStats[laborId].anterior += sup;
-                            }
+                        laborStatsByZona[key].total += sup;
+
+                        if (fechaLabor < inicio) {
+                            laborStatsByZona[key].anterior += sup;
+                        } else if (fechaLabor >= inicio && fechaLabor <= fin) {
+                            laborStatsByZona[key].semana += sup;
+                            laborStatsByZona[key].anterior += sup;
                         }
                     }
                 });
             }
         });
 
-        const laboresConAvance = Object.entries(laborStats).filter(([id, stats]) => stats.total > 0);
+        const laboresConAvance = Object.values(laborStatsByZona).filter(stats => stats.total > 0);
+        laboresConAvance.sort((a, b) => {
+            if (a.zona !== b.zona) return a.zona - b.zona;
+            return a.nombre.localeCompare(b.nombre);
+        });
+
         const totalHectareas = Object.values(cicloStats).reduce((sum, ha) => sum + ha, 0);
         const pctPlanta = totalHectareas > 0 ? ((cicloStats.PLANTA / totalHectareas) * 100).toFixed(1) : 0;
         const pctSoca = totalHectareas > 0 ? ((cicloStats.SOCA / totalHectareas) * 100).toFixed(1) : 0;
@@ -1706,6 +1846,7 @@
                 <table class="data-table">
                     <thead>
                         <tr>
+                            <th style="text-align: center;">ZONA</th>
                             <th>LABOR</th>
                             <th style="text-align: center;">Anterior (Ha)</th>
                             <th style="text-align: center;">Semana (Ha)</th>
@@ -1717,15 +1858,16 @@
         `;
 
         if (laboresConAvance.length === 0) {
-            html += '<tr><td colspan="5" style="text-align: center; padding: 30px; color: #666;">No hay labores con avance en el período seleccionado</td></tr>';
+            html += '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #666;">No hay labores con avance en el período seleccionado</td></tr>';
         } else {
             const totalSuperficie = filteredData.reduce((sum, r) => sum + parseFloat(r.superficie || 0), 0);
             
-            laboresConAvance.forEach(([id, stats]) => {
+            laboresConAvance.forEach(stats => {
                 const anterior = stats.anterior - stats.semana;
                 const pctAvance = totalSuperficie > 0 ? ((stats.total / totalSuperficie) * 100).toFixed(1) : 0;
                 html += `
                     <tr>
+                        <td style="text-align: center;"><strong>${stats.zona}</strong></td>
                         <td><strong>${stats.nombre.toUpperCase()}</strong></td>
                         <td style="text-align: center;">${anterior.toFixed(2)}</td>
                         <td style="text-align: center;">${stats.semana.toFixed(2)}</td>
@@ -1920,20 +2062,19 @@
             const zonaMatch = zona === 'TODAS' || r.zona == zona;
             let cicloMatch = false;
             if (ciclo === 'SOCAS_RESOCAS') {
-                cicloMatch = r.ciclo === 'SOCA' || r.ciclo === 'RESOCA';
+                cicloMatch = r.ciclo?.toUpperCase() === 'SOCA' || r.ciclo?.toUpperCase().includes('RESOCA');
             } else if (ciclo === 'PLANTA') {
-                cicloMatch = r.ciclo === 'PLANTA';
+                cicloMatch = r.ciclo?.toUpperCase() === 'PLANTA';
             }
             return zafraMatch && zonaMatch && cicloMatch;
         });
 
-        const laborStats = {};
-        laboresList.forEach(labor => {
-            laborStats[labor.id] = { nombre: labor.name, anterior: 0, semana: 0, total: 0 };
-        });
-
+        const laborStatsByZona = {};
+        
         filteredData.forEach(r => {
             const sup = parseFloat(r.superficie || 0);
+            const zonaRegistro = r.zona || 'Sin Zona';
+            
             if (r.labores) {
                 Object.entries(r.labores).forEach(([laborId, laborData]) => {
                     const realizada = laborData?.realizada || laborData === true;
@@ -1944,21 +2085,35 @@
                         const inicio = new Date(fechaInicio);
                         const fin = new Date(fechaFin);
 
-                        if (laborStats[laborId]) {
-                            laborStats[laborId].total += sup;
-                            if (fechaLabor < inicio) {
-                                laborStats[laborId].anterior += sup;
-                            } else if (fechaLabor >= inicio && fechaLabor <= fin) {
-                                laborStats[laborId].semana += sup;
-                                laborStats[laborId].anterior += sup;
-                            }
+                        const key = `${zonaRegistro}_${laborId}`;
+                        if (!laborStatsByZona[key]) {
+                            laborStatsByZona[key] = {
+                                zona: zonaRegistro,
+                                nombre: laboresList.find(l => l.id === laborId)?.name || laborId,
+                                anterior: 0,
+                                semana: 0,
+                                total: 0
+                            };
+                        }
+
+                        laborStatsByZona[key].total += sup;
+                        if (fechaLabor < inicio) {
+                            laborStatsByZona[key].anterior += sup;
+                        } else if (fechaLabor >= inicio && fechaLabor <= fin) {
+                            laborStatsByZona[key].semana += sup;
+                            laborStatsByZona[key].anterior += sup;
                         }
                     }
                 });
             }
         });
 
-        const laboresConAvance = Object.entries(laborStats).filter(([id, stats]) => stats.total > 0);
+        const laboresConAvance = Object.values(laborStatsByZona).filter(stats => stats.total > 0);
+        laboresConAvance.sort((a, b) => {
+            if (a.zona !== b.zona) return a.zona - b.zona;
+            return a.nombre.localeCompare(b.nombre);
+        });
+
         const zafraFormatted = zafra.substring(0, 4) + '/' + zafra.substring(4);
 
         let csv = "data:text/csv;charset=utf-8,";
@@ -1967,11 +2122,11 @@
         csv += `CICLO: ${ciclo === 'SOCAS_RESOCAS' ? 'SOCAS Y RESOCAS' : 'PLANTAS'}\n`;
         csv += `ZONA: ${zona === 'TODAS' ? 'TODAS' : zona}\n`;
         csv += `SEMANA DEL ${new Date(fechaInicio).toLocaleDateString('es-MX')} AL ${new Date(fechaFin).toLocaleDateString('es-MX')}\n\n`;
-        csv += "LABOR,Anterior (Ha),Semana (Ha),A la Fecha (Ha)\n";
+        csv += "ZONA,LABOR,Anterior (Ha),Semana (Ha),A la Fecha (Ha)\n";
 
-        laboresConAvance.forEach(([id, stats]) => {
+        laboresConAvance.forEach(stats => {
             const anterior = stats.anterior - stats.semana;
-            csv += `"${stats.nombre}",${anterior.toFixed(2)},${stats.semana.toFixed(2)},${stats.total.toFixed(2)}\n`;
+            csv += `${stats.zona},"${stats.nombre}",${anterior.toFixed(2)},${stats.semana.toFixed(2)},${stats.total.toFixed(2)}\n`;
         });
 
         const link = document.createElement("a");
@@ -1993,7 +2148,7 @@
         let csv = "data:text/csv;charset=utf-8,";
         csv += "Zafra-Ciclo,Zona,Campo,ID-Prod,Productor,Superficie,Ciclo,Regimen,Fecha-Avance,Observaciones,Usuario,";
 
-        const labNames = ['Desmonte', 'Destronconche', '1er_Barbecho', '2do_Barbecho', 'Ap_Encalado', '1ra_Rastra', 'Surco',
+        const labNames = ['Desmonte', 'Destroncone', '1er_Barbecho', '2do_Barbecho', 'Ap_Encalado', '1ra_Rastra', 'Surco',
             'Siembra_Amp', 'Siembra_Rep', 'Jta_Quema', '1er_Cultivo', '1er_Cultivo_Yta',
             '1ra_Ap_Fertilizante', '1ra_Ap_Fert_Mec', '1er_Riego', 'Subsuelo_Ctral',
             '1ra_Limpia', '1ra_Ap_Herbicida', '2da_Ap_Ferti', '2do_Riego', 'Ahile_de_Tlazole',
@@ -2042,7 +2197,6 @@
         showAlert('Datos exportados exitosamente', 'success');
     }
 
-    // Event Listeners
     document.getElementById('searchInput').addEventListener('input', function(e) {
         const term = e.target.value.toLowerCase();
         const rows = document.querySelectorAll('#dataTableBody tr');
@@ -2060,6 +2214,10 @@
     });
 
     document.getElementById('nombre_productor').addEventListener('input', function(e) {
+        e.target.value = e.target.value.toUpperCase();
+    });
+
+    document.getElementById('ciclo').addEventListener('input', function(e) {
         e.target.value = e.target.value.toUpperCase();
     });
 
